@@ -1,6 +1,6 @@
 {
 	"name": "@cutpro/mcp",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"mcpName": "io.github.getcutpro/cutpro",
 	"description": "CutPro MCP server — wraps the public v1 API as MCP tools for AI clients",
 	"author": "Lucas Toledo",
