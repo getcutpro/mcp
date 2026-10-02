@@ -23,7 +23,7 @@
 			"interface": {
 				"displayName": "CutPro",
 				"shortDescription": "AI clips from long videos",
-				"longDescription": "CutPro finds the best moments of a long video and turns them into short, captioned vertical clips ready for TikTok, Reels and Shorts.\n\nPaste a YouTube, Twitch, Kick or TikTok link and ChatGPT shows what the job costs before anything runs. Once you agree, CutPro clips the video, ranks the clips by how engaging they are, applies your saved templates, renders the final MP4s and posts them to the accounts you connected on cut.pro, now or on a schedule.\n\nIt also follows your favorite channels: CutPro clips a live stream while it airs, every 10 minutes, so the best moments are ready before the broadcast ends. And it transcribes audio and video into timed captions in SRT, VTT or plain text.\n\nEverything happens in your own CutPro workspace and uses its credits, the same as on cut.pro.",
+				"longDescription": "CutPro finds the best moments of a long video and turns them into short, captioned vertical clips ready for TikTok, Reels and Shorts.\n\nPaste a YouTube, Twitch, Kick or TikTok link and CutPro clips the video, ranks the clips by how engaging they are, applies your saved templates, renders the final MP4s and posts them to the accounts you connected on cut.pro, now or on a schedule. ChatGPT always asks before starting a job or publishing anything.\n\nIt also follows your favorite channels: CutPro clips a live stream while it airs, every 10 minutes, so the best moments are ready before the broadcast ends. And it transcribes audio and video into timed captions in SRT, VTT or plain text.\n\nEverything happens in your own CutPro workspace, the same one you use on cut.pro.",
 				"developerName": "CutPro",
 				"category": "Creativity",
 				"capabilities": [
@@ -35,7 +35,7 @@
 					"Transcribe audio and video into captions"
 				],
 				"websiteURL": "https://cut.pro",
-				"supportURL": "https://cut.pro/support",
+				"supportURL": "https://cut.pro/en/help",
 				"privacyPolicyURL": "https://cut.pro/privacy",
 				"termsOfServiceURL": "https://cut.pro/terms",
 				"defaultPrompt": [
@@ -51,16 +51,16 @@
 				"test_cases": {
 					"positive": [
 						{
-							"description": "Preview a public video and its credit cost without spending anything",
-							"prompt": "How many credits would it cost to clip https://www.youtube.com/watch?v=iG9CE55wbtY?",
+							"description": "Preview a public video before clipping it",
+							"prompt": "What is this video about and how long is it? https://www.youtube.com/watch?v=iG9CE55wbtY",
 							"tools_triggered": "analyze_video",
-							"expected_behavior": "Calls analyze_video once and answers with the video's title, duration and credits_cost. Nothing is charged and no clipping job starts."
+							"expected_behavior": "Calls analyze_video once and answers with the video's title and duration. No clipping job starts."
 						},
 						{
-							"description": "Clip a video after the user confirms the cost",
-							"prompt": "Clip https://www.youtube.com/watch?v=iG9CE55wbtY into shorts. Yes, go ahead with the cost.",
+							"description": "Clip a video after the user confirms",
+							"prompt": "Clip https://www.youtube.com/watch?v=iG9CE55wbtY into shorts. Yes, go ahead.",
 							"tools_triggered": "analyze_video, create_submission, get_submission",
-							"expected_behavior": "Shows the cost from analyze_video, starts the job with create_submission once the user agrees, then reports the submission status from get_submission."
+							"expected_behavior": "Previews the video with analyze_video, starts the job with create_submission once the user agrees, then reports the submission status from get_submission."
 						},
 						{
 							"description": "List the best clips of a finished clipping job",
