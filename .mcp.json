@@ -1,0 +1,5 @@
+{
+	"mcpServers": {
+		"cutpro": { "type": "http", "url": "https://mcp.cut.pro" }
+	}
+}
