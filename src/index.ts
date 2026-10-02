@@ -13,7 +13,7 @@ import { z } from "zod";
 const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
 // Keep in sync with package.json and server.json on every release.
-const SERVER_VERSION = "2.0.0";
+const SERVER_VERSION = "2.0.1";
 
 type Creds = { apiKey: string; workspaceId?: string };
 
@@ -59,6 +59,7 @@ const OPERATION = z.object({
 	requestBody: z
 		.object({ content: z.record(z.string(), z.object({ schema: z.object({ properties: z.record(z.string(), SCHEMA).optional(), required: z.array(z.string()).optional() }) })) })
 		.optional(),
+	responses: z.record(z.string(), z.object({ content: z.record(z.string(), z.object({ schema: SCHEMA })).optional() })).optional(),
 	"x-mcp": z
 		.object({
 			annotations: z
@@ -78,13 +79,38 @@ const METHODS = ["get", "post", "put", "patch", "delete"];
 const OVERWRITING_METHODS = ["put", "patch", "delete"];
 const SPEC_TTL_MS = 10 * 60 * 1000;
 
+// The API spec is OpenAPI 3.0, which marks a nullable field with `nullable: true`; JSON Schema, what MCP clients validate with, needs "null" in the type instead.
+function nullableToJsonSchema(node: unknown): unknown {
+	if (Array.isArray(node)) return node.map(nullableToJsonSchema);
+	if (!isRecord(node)) return node;
+	const { nullable, ...rest } = node;
+	const schema: Record<string, unknown> = Object.fromEntries(Object.entries(rest).map(([key, value]) => [key, nullableToJsonSchema(value)]));
+	if (nullable !== true) return schema;
+	if (typeof schema.type === "string") schema.type = [schema.type, "null"];
+	if (Array.isArray(schema.enum)) schema.enum = [...schema.enum, null];
+	if (Array.isArray(schema.anyOf)) schema.anyOf = [...schema.anyOf, { type: "null" }];
+	return schema;
+}
+
+// The route's own success responses become the output schema, so structured results are as described as the inputs.
+function outputSchemaOf(responses: z.infer<typeof OPERATION>["responses"]): Tool["outputSchema"] {
+	const success = Object.entries(responses ?? {})
+		.filter(([status]) => /^2\d\d$/.test(status))
+		.map(([, response]) => response.content?.["application/json"]?.schema);
+	const schemas = success.filter((schema): schema is Record<string, unknown> => schema?.type === "object");
+	if (schemas.length === 0 || schemas.length !== success.length) return undefined;
+	const distinct = [...new Map(schemas.map((schema) => [JSON.stringify(schema), schema])).values()];
+	const [only] = distinct;
+	return distinct.length === 1 && only ? { ...only, type: "object" } : { type: "object", anyOf: distinct };
+}
+
 // One tool per operation of the API's own spec, so the MCP cannot drift from the API: a new route, field or description shows up here on the next refresh.
 function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 	const endpoints = new Map<string, Endpoint>();
 	for (const [path, item] of Object.entries(spec.paths)) {
 		for (const [method, raw] of Object.entries(item)) {
 			if (!METHODS.includes(method)) continue;
-			const operation = OPERATION.parse(raw);
+			const operation = OPERATION.parse(nullableToJsonSchema(raw));
 			if (!operation.operationId) continue;
 			const parameters = operation.parameters ?? [];
 			const body = operation.requestBody?.content["application/json"]?.schema;
@@ -107,6 +133,7 @@ function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 					title: operation.summary,
 					description: [operation.summary, operation.description].filter(Boolean).join("\n\n"),
 					inputSchema: { type: "object", properties, required },
+					outputSchema: outputSchemaOf(operation.responses),
 					annotations: {
 						title: operation.summary,
 						readOnlyHint: method === "get",
@@ -154,10 +181,10 @@ function requestFor(endpoint: Endpoint, args: Record<string, unknown>): { path: 
 	return { path: search ? `${path}?${search}` : path, body };
 }
 
-async function run(fetcher: () => Promise<unknown>): Promise<CallToolResult> {
+async function run(fetcher: () => Promise<unknown>, structured: boolean): Promise<CallToolResult> {
 	try {
 		const out = (await fetcher()) ?? { ok: true };
-		return { content: [{ type: "text", text: typeof out === "string" ? out : JSON.stringify(out) }], structuredContent: isRecord(out) ? out : undefined };
+		return { content: [{ type: "text", text: typeof out === "string" ? out : JSON.stringify(out) }], structuredContent: structured && isRecord(out) ? out : undefined };
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
 		return { content: [{ type: "text", text: message }], isError: true };
@@ -201,7 +228,7 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 		const endpoint = (await available()).get(params.name);
 		if (!endpoint) return { content: [{ type: "text", text: `Unknown tool: ${params.name}` }], isError: true };
 		const { path, body } = requestFor(endpoint, params.arguments ?? {});
-		const result = await run(() => api(endpoint.method, path, body));
+		const result = await run(() => api(endpoint.method, path, body), endpoint.tool.outputSchema !== undefined);
 		// Instructions alone are easy to miss, so the first tool result of the session also carries the notice for the model to relay.
 		if (notice && noticePending) {
 			noticePending = false;
@@ -395,6 +422,12 @@ async function startHttp(port: number): Promise<void> {
 	};
 
 	app.post("/", guard ? [express.json(), guard, mcp] : [express.json(), mcp]);
+	// Stateless: there is no session stream to open or close, and the streamable HTTP spec answers both with 405, not a 404 that reads as a missing endpoint.
+	const methodNotAllowed: RequestHandler = (_req, res) => {
+		res.status(405).set("Allow", "POST").json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null });
+	};
+	app.get("/", guard ? [guard, methodNotAllowed] : methodNotAllowed);
+	app.delete("/", guard ? [guard, methodNotAllowed] : methodNotAllowed);
 
 	// Registered last so it also catches the SDK auth routes' own body parsers: otherwise express answers an HTML 400 carrying the SyntaxError stack and logs it.
 	const badBody: ErrorRequestHandler = (err, req, res, next) => {
