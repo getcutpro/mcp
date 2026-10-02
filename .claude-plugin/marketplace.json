@@ -1,0 +1,15 @@
+{
+	"name": "cutpro",
+	"description": "CutPro for Claude: clip long videos and live streams, render and post clips, transcribe audio and video.",
+	"owner": {
+		"name": "CutPro",
+		"url": "https://cut.pro"
+	},
+	"plugins": [
+		{
+			"name": "cutpro",
+			"source": ".",
+			"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube."
+		}
+	]
+}

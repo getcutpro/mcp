@@ -1,0 +1,102 @@
+{
+	"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+	"name": "cutpro",
+	"version": "1.0.0",
+	"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube. Also transcribes audio and video.",
+	"author": {
+		"name": "CutPro",
+		"url": "https://cut.pro"
+	},
+	"homepage": "https://cut.pro",
+	"repository": "https://github.com/getcutpro/mcp",
+	"license": "MIT",
+	"keywords": [
+		"video",
+		"clips",
+		"shorts",
+		"live",
+		"transcription",
+		"social media"
+	],
+	"extensions": {
+		"com.openai": {
+			"interface": {
+				"displayName": "CutPro",
+				"shortDescription": "AI clips from long videos",
+				"longDescription": "CutPro finds the best moments of a long video and turns them into short, captioned vertical clips ready for TikTok, Reels and Shorts.\n\nPaste a YouTube, Twitch, Kick or TikTok link and ChatGPT shows what the job costs before anything runs. Once you agree, CutPro clips the video, ranks the clips by how engaging they are, applies your saved templates, renders the final MP4s and posts them to the accounts you connected on cut.pro, now or on a schedule.\n\nIt also follows your favorite channels: CutPro clips a live stream while it airs, every 10 minutes, so the best moments are ready before the broadcast ends. And it transcribes audio and video into timed captions in SRT, VTT or plain text.\n\nEverything happens in your own CutPro workspace and uses its credits, the same as on cut.pro.",
+				"developerName": "CutPro",
+				"category": "Creativity",
+				"capabilities": [
+					"Clip long videos into short vertical clips",
+					"Clip live streams while they air",
+					"Apply your saved editing templates",
+					"Render clips to MP4 and share download links",
+					"Post clips to TikTok, Instagram and YouTube",
+					"Transcribe audio and video into captions"
+				],
+				"websiteURL": "https://cut.pro",
+				"supportURL": "https://cut.pro/support",
+				"privacyPolicyURL": "https://cut.pro/privacy",
+				"termsOfServiceURL": "https://cut.pro/terms",
+				"defaultPrompt": [
+					"Turn this YouTube video into short clips",
+					"Show me the best clips from my last video",
+					"Follow this Twitch channel and clip its lives"
+				],
+				"brandColor": "#4F46E5",
+				"composerIcon": "./assets/logo.png",
+				"logo": "./assets/logo.png"
+			},
+			"review": {
+				"test_cases": {
+					"positive": [
+						{
+							"description": "Preview a public video and its credit cost without spending anything",
+							"prompt": "How many credits would it cost to clip https://www.youtube.com/watch?v=iG9CE55wbtY?",
+							"tools_triggered": "analyze_video",
+							"expected_behavior": "Calls analyze_video once and answers with the video's title, duration and credits_cost. Nothing is charged and no clipping job starts."
+						},
+						{
+							"description": "Clip a video after the user confirms the cost",
+							"prompt": "Clip https://www.youtube.com/watch?v=iG9CE55wbtY into shorts. Yes, go ahead with the cost.",
+							"tools_triggered": "analyze_video, create_submission, get_submission",
+							"expected_behavior": "Shows the cost from analyze_video, starts the job with create_submission once the user agrees, then reports the submission status from get_submission."
+						},
+						{
+							"description": "List the best clips of a finished clipping job",
+							"prompt": "Show me the five best clips from my most recent video.",
+							"tools_triggered": "list_videos, list_submissions, list_clips",
+							"expected_behavior": "Finds the latest video with list_videos, its completed submission with list_submissions, and lists the top five clips from list_clips with title, rating and time range."
+						},
+						{
+							"description": "Render a clip and hand back a download link",
+							"prompt": "Render the best clip of my most recent video and give me the link to download it.",
+							"tools_triggered": "list_videos, list_submissions, list_clips, render_clip, get_render, download_render",
+							"expected_behavior": "Renders the top-rated clip with render_clip, checks get_render until it is completed, and returns the signed download URL from download_render."
+						},
+						{
+							"description": "Read the clips of a monitored live stream",
+							"prompt": "Which channels am I monitoring for lives, and what were the best clips of the last broadcast?",
+							"tools_triggered": "list_monitors, list_broadcasts, list_broadcast_clips",
+							"expected_behavior": "Lists the live monitors with list_monitors, the latest broadcast of the first one with list_broadcasts, and its best clips with list_broadcast_clips."
+						}
+					],
+					"negative": [
+						{
+							"description": "Image editing is not something CutPro does",
+							"prompt": "Remove the background from this photo of my dog."
+						},
+						{
+							"description": "Writing a script needs no CutPro tool",
+							"prompt": "Write a script for a two-minute YouTube video about making pizza at home."
+						},
+						{
+							"description": "Unrelated general question",
+							"prompt": "What will the weather be like in São Paulo tomorrow?"
+						}
+					]
+				}
+			}
+		}
+	}
+}
