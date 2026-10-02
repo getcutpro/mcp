@@ -99,6 +99,7 @@
 						}
 					]
 				},
+				"demo_recording_url": "https://youtu.be/KaOnfkd25I8",
 				"commerce": false,
 				"commerce_description": "This plugin does not sell products or process payments. It runs jobs in the user's existing CutPro workspace; nothing is bought or sold inside ChatGPT."
 			},
