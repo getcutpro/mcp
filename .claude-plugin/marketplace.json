@@ -8,7 +8,7 @@
 	"plugins": [
 		{
 			"name": "cutpro",
-			"source": ".",
+			"source": "./plugin",
 			"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube."
 		}
 	]
