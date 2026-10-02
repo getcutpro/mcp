@@ -3,14 +3,24 @@
 	"displayName": "CutPro",
 	"version": "1.0.0",
 	"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube. Also transcribes audio and video.",
-	"author": { "name": "CutPro", "url": "https://cut.pro" },
+	"author": {
+		"name": "CutPro",
+		"url": "https://cut.pro"
+	},
 	"homepage": "https://cut.pro",
 	"repository": "https://github.com/getcutpro/mcp",
 	"license": "MIT",
-	"keywords": ["video", "clips", "shorts", "live", "transcription", "social media"],
+	"keywords": [
+		"video",
+		"clips",
+		"shorts",
+		"live",
+		"transcription",
+		"social media"
+	],
 	"icon": "./assets/logo.png",
 	"documentationUrl": "https://cut.pro/docs/api-reference/mcp",
 	"supportUrl": "https://cut.pro/support",
-	"privacyPolicyUrl": "https://cut.pro/privacy",
+	"privacyPolicyUrl": "https://cut.pro/ai-privacy",
 	"termsOfServiceUrl": "https://cut.pro/terms"
 }

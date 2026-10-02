@@ -36,7 +36,7 @@
 				],
 				"websiteURL": "https://cut.pro",
 				"supportURL": "https://cut.pro/en/help",
-				"privacyPolicyURL": "https://cut.pro/privacy",
+				"privacyPolicyURL": "https://cut.pro/ai-privacy",
 				"termsOfServiceURL": "https://cut.pro/terms",
 				"defaultPrompt": [
 					"Turn this YouTube video into short clips",
@@ -44,8 +44,11 @@
 					"Follow this Twitch channel and clip its lives"
 				],
 				"brandColor": "#4F46E5",
+				"brandColorDark": "#8B85F5",
 				"composerIcon": "./assets/logo.png",
-				"logo": "./assets/logo.png"
+				"composerIconDark": "./assets/logo.png",
+				"logo": "./assets/logo.png",
+				"logoDark": "./assets/logo.png"
 			},
 			"review": {
 				"test_cases": {
@@ -95,6 +98,22 @@
 							"prompt": "What will the weather be like in São Paulo tomorrow?"
 						}
 					]
+				},
+				"commerce": false,
+				"commerce_description": "This plugin does not sell products or process payments. It runs jobs in the user's existing CutPro workspace; nothing is bought or sold inside ChatGPT."
+			},
+			"onboardingSkill": "./skills/cutpro/SKILL.md",
+			"publication": {
+				"release_notes": "First release. Clip long videos and live streams into short vertical clips, apply saved templates, render MP4s, post to TikTok, Instagram and YouTube, follow channels' live broadcasts, and transcribe audio and video. Users connect by signing in on cut.pro and choosing a workspace.",
+				"translations": {
+					"pt-BR": {
+						"subtitle": "Cortes com IA de vídeos longos",
+						"description": "O CutPro encontra os melhores momentos de um vídeo longo e transforma em cortes verticais curtos, com legenda, prontos para TikTok, Reels e Shorts.\n\nCole um link do YouTube, Twitch, Kick ou TikTok e o CutPro clipa o vídeo, ordena os cortes pelo potencial de engajamento, aplica seus templates salvos, renderiza os MP4 finais e publica nas contas que você conectou no cut.pro, na hora ou agendado. O ChatGPT sempre pergunta antes de iniciar um trabalho ou publicar qualquer coisa.\n\nEle também acompanha seus canais favoritos: o CutPro clipa uma live enquanto ela está no ar, a cada 10 minutos, e os melhores momentos ficam prontos antes de a transmissão acabar. E transcreve áudio e vídeo em legendas com tempo, em SRT, VTT ou texto.\n\nTudo acontece no seu próprio workspace do CutPro, o mesmo que você usa no cut.pro."
+					},
+					"es-ES": {
+						"subtitle": "Clips con IA de videos largos",
+						"description": "CutPro encuentra los mejores momentos de un video largo y los convierte en clips verticales cortos, con subtítulos, listos para TikTok, Reels y Shorts.\n\nPega un enlace de YouTube, Twitch, Kick o TikTok y CutPro recorta el video, ordena los clips por su potencial de interacción, aplica tus plantillas guardadas, renderiza los MP4 finales y los publica en las cuentas que conectaste en cut.pro, al momento o programados. ChatGPT siempre pregunta antes de iniciar un trabajo o publicar algo.\n\nTambién sigue tus canales favoritos: CutPro recorta un directo mientras está al aire, cada 10 minutos, y los mejores momentos están listos antes de que termine la transmisión. Y transcribe audio y video en subtítulos con tiempos, en SRT, VTT o texto.\n\nTodo sucede en tu propio workspace de CutPro, el mismo que usas en cut.pro."
+					}
 				}
 			}
 		}
