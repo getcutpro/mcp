@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
-[![smithery badge](https://smithery.ai/badge/contact-8lma/cutpro)](https://smithery.ai/servers/contact-8lma/cutpro)
+[![Smithery](https://img.shields.io/badge/Smithery-contact--8lma%2Fcutpro-7C3AED?style=flat-square)](https://smithery.ai/servers/contact-8lma/cutpro)
 
 A Model Context Protocol (MCP) server that turns long videos into viral clips with AI. It exposes the full [CutPro API](https://cut.pro/docs/api-reference) as tools, so an LLM can run the whole flow: analyze a video, clip the best moments, render the final MP4, and publish to TikTok, Instagram and YouTube.
 
