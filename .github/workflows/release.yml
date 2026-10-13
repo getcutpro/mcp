@@ -49,6 +49,14 @@ jobs:
             gh release view "$tag" >/dev/null 2>&1 && continue
             if [ -n "$(notes "$tag")" ]; then gh release create "$tag" --verify-tag --title "$tag" --notes "$(notes "$tag")" --latest=false; fi
           done
+      # The registry checks the package on npm, which takes a few minutes to serve a new version.
+      - name: Wait for npm to serve the version
+        run: |
+          for attempt in $(seq 1 40); do
+            [ "$(npm view "@cutpro/mcp@${GITHUB_REF_NAME#v}" version 2>/dev/null)" = "${GITHUB_REF_NAME#v}" ] && exit 0
+            sleep 15
+          done
+          exit 1
       - name: Publish to the MCP Registry
         run: |
           curl -sL https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz | tar xz mcp-publisher
