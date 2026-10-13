@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { lookup } from "node:dns/promises";
+import { lookup, type LookupAddress } from "node:dns";
+import https from "node:https";
 import { isIP } from "node:net";
 import type { Request, Response } from "express";
 import type { OAuthServerProvider, AuthorizationParams } from "@modelcontextprotocol/sdk/server/auth/provider.js";
@@ -27,22 +28,44 @@ function isPublicAddress(address: string): boolean {
 	return !(normalized === "::" || normalized === "::1" || /^f[cd]/.test(normalized) || normalized.startsWith("fe80"));
 }
 
-async function readLimited(res: globalThis.Response, maxBytes: number): Promise<string | null> {
-	const reader = res.body?.getReader();
-	if (!reader) return null;
-	const chunks: Uint8Array[] = [];
-	let size = 0;
-	for (;;) {
-		const { done, value } = await reader.read();
-		if (done) break;
-		size += value.byteLength;
-		if (size > maxBytes) {
-			await reader.cancel();
-			return null;
-		}
-		chunks.push(value);
-	}
-	return size === 0 ? null : Buffer.concat(chunks).toString("utf8");
+// The socket connects to the addresses checked here, so a second resolution (DNS rebinding) cannot swap in an internal one.
+function publicLookup(
+	hostname: string,
+	options: { all?: boolean },
+	callback: (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void,
+): void {
+	lookup(hostname, { all: true }, (error, addresses) => {
+		if (error) return callback(error, []);
+		const [first] = addresses;
+		if (!first || !addresses.every(({ address }) => isPublicAddress(address))) return callback(new Error("BLOCKED_ADDRESS"), []);
+		if (options.all) return callback(null, addresses);
+		callback(null, first.address, first.family);
+	});
+}
+
+// No redirect followed and the body cut at `maxBytes`; null for anything but a complete 200.
+function fetchPinned(url: string, timeoutMs: number, maxBytes: number): Promise<string | null> {
+	return new Promise((resolve) => {
+		const finish = (text: string | null) => {
+			clearTimeout(timer);
+			request.destroy();
+			resolve(text);
+		};
+		const request = https.get(url, { lookup: publicLookup }, (response) => {
+			if (response.statusCode !== 200) return finish(null);
+			const chunks: Buffer[] = [];
+			let size = 0;
+			response.on("data", (chunk: Buffer) => {
+				size += chunk.length;
+				if (size > maxBytes) return finish(null);
+				chunks.push(chunk);
+			});
+			response.on("end", () => finish(size === 0 ? null : Buffer.concat(chunks).toString("utf8")));
+			response.on("error", () => finish(null));
+		});
+		const timer = setTimeout(() => finish(null), timeoutMs);
+		request.on("error", () => finish(null));
+	});
 }
 
 const CLIENT_METADATA_DOCUMENT = z.object({
@@ -224,11 +247,7 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 			const host = new URL(url).hostname;
 			// The client picks this URL, so never let it point the server at its own network.
 			if (isIP(host) || !host.includes(".")) return undefined;
-			const addresses = await lookup(host, { all: true });
-			if (addresses.length === 0 || !addresses.every(({ address }) => isPublicAddress(address))) return undefined;
-
-			const res = await fetch(url, { signal: AbortSignal.timeout(5000), redirect: "error" });
-			const text = res.ok ? await readLimited(res, MAX_METADATA_BYTES) : null;
+			const text = await fetchPinned(url, 5000, MAX_METADATA_BYTES);
 			if (!text) return undefined;
 			const document = CLIENT_METADATA_DOCUMENT.safeParse(JSON.parse(text));
 			if (!document.success || document.data.client_id !== url) return undefined;

@@ -1,6 +1,6 @@
 ---
 name: cutpro
-description: Turn long videos and live streams into short clips with CutPro, then render and publish them. Use when the user wants to clip a YouTube, Twitch, Kick or TikTok video, follow a channel's lives, render or download a clip, post clips to TikTok, Instagram or YouTube, or transcribe audio and video.
+description: Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more), create realistic AI personas and swap them into videos, and turn long videos and live streams into short clips with CutPro, then render and publish them. Use when the user wants to generate or animate an image or a video, make an AI person or character, put a persona into a video, clip a YouTube, Twitch, Kick or TikTok video, follow a channel's lives, render or download a clip, post to TikTok, Instagram or YouTube, or transcribe audio and video.
 license: MIT
 ---
 
@@ -10,7 +10,28 @@ Every CutPro tool maps to one endpoint of the CutPro API and answers with the AP
 
 ## Spend and publish only after the user agrees
 
-Tools that spend credits or publish (`create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. `analyze_video` is free and gives the exact cost: call it first.
+Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `list_generation_models` for images and videos, `get_persona_catalog` and `quote_persona_swap` for personas, `analyze_video` for clipping.
+
+## Generate images and videos with any model
+
+1. `list_generation_models` lists every image and video model available right now, with the modes, resolutions, durations, aspect ratios and price of each. When the user names no model, pick from `presets` (`fast`, `balanced`, `best`); when they name one ("make it with Veo", "use Kling"), match it by `name`.
+2. Work out the total: the model's `credits` for the mode and resolution, times `seconds` for a video (`silent_credits` when `audio` is `false`). Tell the user the model, what will be made and the total, and wait for a yes.
+3. `create_generation` with `kind`, `model`, `mode`, `prompt`, `aspect_ratio` (`9:16` for TikTok, Reels and Shorts), `seconds` for a video, and `credits` set to that total. `PRICE_CHANGED` charges nothing and brings the new total in `extra.credits`: tell the user and ask again.
+4. Poll `get_generation` every 10 seconds until `status` is `ready` or `failed`. `expected_seconds` says how long the model usually takes. A failed generation gives its credits back on its own.
+5. Show `output.url`. `download_generation` gives the full-quality file, but once taken the credits can no longer be asked back, so only call it when the user wants the file.
+
+To animate an image the user just generated, call `create_generation` again with `kind: "video"`, `mode: "image"` and its `output.image_id` in `image_ids`. `mode: "frames"` goes from a first to a last image, and `mode: "references"` borrows a person, product or style from images (or edits them, for an image). Pictures from the user's disk go up with `upload_generation_image`, available on the local server only. Check `refuses`: some models turn down real faces, minors or public figures.
+
+## AI personas
+
+A persona is a realistic AI person that stays the same across photos and videos, for UGC, ads and faceless channels.
+
+1. `get_persona_catalog` has every trait, the defaults and the prices. `list_persona_presets` offers ready-made characters, and `create_persona_from_preset` starts from one.
+2. `create_persona` with the traits the user describes (`chips`). A persona of the user's own face needs `upload_persona_face` first (local server only, and only their own face, as an adult).
+3. Poll `get_persona` until the photo is ready and show it. `regenerate_persona` makes a new photo or applies a one-line edit (`note`); every photo is kept in `versions`.
+4. `save_persona` keeps it, with a name.
+5. To put the persona in a video, the video has to be in the library: `create_persona_source_upload` and `complete_persona_source_upload` (local server only), or a `media_id` already there. `quote_persona_swap` gives the price, and `create_persona_video` with that price replaces the main person while the scene, camera, motion and sound stay. Poll `get_persona_video` until `download_url` is set.
+
 
 ## Clip a video
 
@@ -43,7 +64,8 @@ A `type: "video"` monitor clips each new upload instead, and those clips arrive 
 
 ## When something fails
 
-- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits and the workspace has `extra.current_balance`. Credits are managed on cut.pro.
+- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits. When `extra.top_up_url` is set, hand it over: it is where credits are bought. Otherwise credits are managed on cut.pro.
+- `TOO_MANY_RUNNING`: the workspace already has the most generations running at once. Wait for one to finish.
 - `RATE_LIMIT_EXCEEDED`: wait `extra.retry_after` seconds before calling again.
 - `409` codes such as `VIDEO_ALREADY_PROCESSING` or `RENDER_ALREADY_IN_PROGRESS`: the work is already running, so poll it instead of starting it again.
 - `410` codes such as `SUBMISSION_EXPIRED` or `RECORDING_EXPIRED`: the material is gone. Offer to submit the video again; an existing `edit_id` still renders with `create_render`.

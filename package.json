@@ -1,8 +1,8 @@
 {
 	"name": "@cutpro/mcp",
-	"version": "2.0.1",
+	"version": "2.1.0",
 	"mcpName": "io.github.getcutpro/cutpro",
-	"description": "CutPro MCP server — wraps the public v1 API as MCP tools for AI clients",
+	"description": "CutPro MCP server: AI image and video generation with any model, AI personas, and AI clipping, as MCP tools for AI clients",
 	"author": "Lucas Toledo",
 	"license": "MIT",
 	"type": "module",
@@ -12,6 +12,12 @@
 		"model-context-protocol",
 		"cutpro",
 		"ai",
+		"image-generation",
+		"video-generation",
+		"ai-persona",
+		"veo",
+		"kling",
+		"seedance",
 		"clipping"
 	],
 	"homepage": "https://cut.pro/docs/api-reference/mcp",

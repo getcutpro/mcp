@@ -1,8 +1,8 @@
 {
 	"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
 	"name": "cutpro",
-	"version": "1.0.0",
-	"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube. Also transcribes audio and video.",
+	"version": "1.1.0",
+	"description": "Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), create realistic AI personas and put them in any video, and turn long videos and live streams into short clips ready for TikTok, Instagram and YouTube.",
 	"author": {
 		"name": "CutPro",
 		"url": "https://cut.pro"
@@ -11,6 +11,12 @@
 	"repository": "https://github.com/getcutpro/mcp",
 	"license": "MIT",
 	"keywords": [
+		"ai video",
+		"ai image",
+		"image generation",
+		"video generation",
+		"ai persona",
+		"ugc",
 		"video",
 		"clips",
 		"shorts",
@@ -22,16 +28,16 @@
 		"com.openai": {
 			"interface": {
 				"displayName": "CutPro",
-				"shortDescription": "AI clips from long videos",
-				"longDescription": "CutPro finds the best moments of a long video and turns them into short, captioned vertical clips ready for TikTok, Reels and Shorts.\n\nPaste a YouTube, Twitch, Kick or TikTok link and CutPro clips the video, ranks the clips by how engaging they are, applies your saved templates, renders the final MP4s and posts them to the accounts you connected on cut.pro, now or on a schedule. ChatGPT always asks before starting a job or publishing anything.\n\nIt also follows your favorite channels: CutPro clips a live stream while it airs, every 10 minutes, so the best moments are ready before the broadcast ends. And it transcribes audio and video into timed captions in SRT, VTT or plain text.\n\nEverything happens in your own CutPro workspace, the same one you use on cut.pro.",
+				"shortDescription": "AI images, videos and clips",
+				"longDescription": "Generate images and videos with the best AI models in one place: Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more. Describe what you want, pick a model or let CutPro choose the best one for the price, and get the result right in ChatGPT. Animate any image you just made into a video, go from a first to a last frame, or borrow a person, product or style from your references.\n\nCreate AI personas: realistic people that stay the same in every photo and video, made from traits or from ready-made characters. Put a persona into any video in place of the person in it, while the scene, camera, motion and sound stay as they were. Perfect for UGC, ads and faceless channels.\n\nCutPro also finds the best moments of a long video and turns them into short, captioned vertical clips. Paste a YouTube, Twitch, Kick or TikTok link and CutPro clips it, ranks the clips, applies your templates, renders the MP4s and posts them to the accounts you connected on cut.pro, now or on a schedule. It clips live streams while they air and transcribes audio and video.\n\nChatGPT always tells you the price and asks before generating, starting a job or publishing anything. Everything happens in your own CutPro workspace, the same one you use on cut.pro.",
 				"developerName": "CutPro",
 				"category": "Creativity",
 				"capabilities": [
-					"Clip long videos into short vertical clips",
-					"Clip live streams while they air",
-					"Apply your saved editing templates",
-					"Render clips to MP4 and share download links",
-					"Post clips to TikTok, Instagram and YouTube",
+					"Generate images with any top AI model",
+					"Generate and animate videos with Veo, Kling, Seedance, Wan and more",
+					"Create realistic AI personas and put them in any video",
+					"Clip long videos and live streams into short vertical clips",
+					"Render clips and post to TikTok, Instagram and YouTube",
 					"Transcribe audio and video into captions"
 				],
 				"websiteURL": "https://cut.pro",
@@ -39,9 +45,9 @@
 				"privacyPolicyURL": "https://cut.pro/ai-privacy",
 				"termsOfServiceURL": "https://cut.pro/terms",
 				"defaultPrompt": [
-					"Turn this YouTube video into short clips",
-					"Show me the best clips from my last video",
-					"Follow this Twitch channel and clip its lives"
+					"Make a 9:16 video of a barista pouring latte art with Veo",
+					"Create an AI persona for my product ads",
+					"Turn this YouTube video into short clips"
 				],
 				"brandColor": "#4F46E5",
 				"brandColorDark": "#8B85F5",
@@ -53,6 +59,24 @@
 			"review": {
 				"test_cases": {
 					"positive": [
+						{
+							"description": "List the image and video models with their prices",
+							"prompt": "Which AI models can I make videos with, and how much does each one cost?",
+							"tools_triggered": "list_generation_models",
+							"expected_behavior": "Calls list_generation_models and answers with the video models, their durations and their price in credits. Nothing is generated."
+						},
+						{
+							"description": "Generate a video after the user confirms the price",
+							"prompt": "Make a 5 second vertical video of a cat surfing a wave, with the balanced option. Yes, go ahead with that price.",
+							"tools_triggered": "list_generation_models, create_generation, get_generation",
+							"expected_behavior": "Reads the balanced video preset and its price with list_generation_models, states the total, starts the video with create_generation once the user agrees, and polls get_generation until it is ready, then shows output.url."
+						},
+						{
+							"description": "Create an AI persona from a description",
+							"prompt": "Create an AI persona: a woman in her twenties with curly brown hair and a casual style. Yes, you can spend the credits.",
+							"tools_triggered": "get_persona_catalog, create_persona, get_persona",
+							"expected_behavior": "Reads the traits and price with get_persona_catalog, creates the persona with create_persona after the user agrees, and polls get_persona until its photo is ready."
+						},
 						{
 							"description": "Preview a public video before clipping it",
 							"prompt": "What is this video about and how long is it? https://www.youtube.com/watch?v=iG9CE55wbtY",
@@ -66,29 +90,13 @@
 							"expected_behavior": "Previews the video with analyze_video, starts the job with create_submission once the user agrees, then reports the submission status from get_submission."
 						},
 						{
-							"description": "List the best clips of a finished clipping job",
-							"prompt": "Show me the five best clips from my most recent video.",
-							"tools_triggered": "list_videos, list_submissions, list_clips",
-							"expected_behavior": "Finds the latest video with list_videos, its completed submission with list_submissions, and lists the top five clips from list_clips with title, rating and time range."
-						},
-						{
 							"description": "Render a clip and hand back a download link",
 							"prompt": "Render the best clip of my most recent video and give me the link to download it.",
 							"tools_triggered": "list_videos, list_submissions, list_clips, render_clip, get_render, download_render",
 							"expected_behavior": "Renders the top-rated clip with render_clip, checks get_render until it is completed, and returns the signed download URL from download_render."
-						},
-						{
-							"description": "Read the clips of a monitored live stream",
-							"prompt": "Which channels am I monitoring for lives, and what were the best clips of the last broadcast?",
-							"tools_triggered": "list_monitors, list_broadcasts, list_broadcast_clips",
-							"expected_behavior": "Lists the live monitors with list_monitors, the latest broadcast of the first one with list_broadcasts, and its best clips with list_broadcast_clips."
 						}
 					],
 					"negative": [
-						{
-							"description": "Image editing is not something CutPro does",
-							"prompt": "Remove the background from this photo of my dog."
-						},
 						{
 							"description": "Writing a script needs no CutPro tool",
 							"prompt": "Write a script for a two-minute YouTube video about making pizza at home."
@@ -96,6 +104,10 @@
 						{
 							"description": "Unrelated general question",
 							"prompt": "What will the weather be like in São Paulo tomorrow?"
+						},
+						{
+							"description": "Math homework is not something CutPro does",
+							"prompt": "Solve 3x + 7 = 22 and explain each step."
 						}
 					]
 				},
@@ -105,15 +117,15 @@
 			},
 			"onboardingSkill": "./skills/cutpro/SKILL.md",
 			"publication": {
-				"release_notes": "First release. Clip long videos and live streams into short vertical clips, apply saved templates, render MP4s, post to TikTok, Instagram and YouTube, follow channels' live broadcasts, and transcribe audio and video. Users connect by signing in on cut.pro and choosing a workspace.",
+				"release_notes": "Generate images and videos with any top AI model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more), animate images into videos, and create realistic AI personas that can be put into any video. Clipping, rendering, posting, live monitoring and transcription work as before.",
 				"translations": {
 					"pt-BR": {
-						"subtitle": "Cortes com IA de vídeos longos",
-						"description": "O CutPro encontra os melhores momentos de um vídeo longo e transforma em cortes verticais curtos, com legenda, prontos para TikTok, Reels e Shorts.\n\nCole um link do YouTube, Twitch, Kick ou TikTok e o CutPro clipa o vídeo, ordena os cortes pelo potencial de engajamento, aplica seus templates salvos, renderiza os MP4 finais e publica nas contas que você conectou no cut.pro, na hora ou agendado. O ChatGPT sempre pergunta antes de iniciar um trabalho ou publicar qualquer coisa.\n\nEle também acompanha seus canais favoritos: o CutPro clipa uma live enquanto ela está no ar, a cada 10 minutos, e os melhores momentos ficam prontos antes de a transmissão acabar. E transcreve áudio e vídeo em legendas com tempo, em SRT, VTT ou texto.\n\nTudo acontece no seu próprio workspace do CutPro, o mesmo que você usa no cut.pro."
+						"subtitle": "Imagem, vídeo e cortes com IA",
+						"description": "Gere imagens e vídeos com os melhores modelos de IA num lugar só: Veo, Kling, Seedance, Wan, Nano Banana, GPT Image e mais. Descreva o que você quer, escolha o modelo ou deixe o CutPro escolher o melhor pelo preço, e receba o resultado no próprio ChatGPT. Anime uma imagem que você acabou de gerar, vá de um primeiro a um último quadro, ou use uma pessoa, um produto ou um estilo das suas referências.\n\nCrie personas com IA: pessoas realistas que continuam iguais em toda foto e todo vídeo, feitas a partir de características ou de personagens prontos. Coloque uma persona em qualquer vídeo no lugar da pessoa que aparece nele, mantendo cena, câmera, movimento e som. Ideal para UGC, anúncios e canais sem rosto.\n\nO CutPro também encontra os melhores momentos de um vídeo longo e transforma em cortes verticais curtos, com legenda. Cole um link do YouTube, Twitch, Kick ou TikTok e o CutPro clipa, ordena os cortes, aplica seus templates, renderiza os MP4 e publica nas contas que você conectou no cut.pro, na hora ou agendado. Ele clipa lives enquanto estão no ar e transcreve áudio e vídeo.\n\nO ChatGPT sempre mostra o preço e pergunta antes de gerar, iniciar um trabalho ou publicar qualquer coisa. Tudo acontece no seu próprio workspace do CutPro, o mesmo que você usa no cut.pro."
 					},
 					"es-ES": {
-						"subtitle": "Clips con IA de videos largos",
-						"description": "CutPro encuentra los mejores momentos de un video largo y los convierte en clips verticales cortos, con subtítulos, listos para TikTok, Reels y Shorts.\n\nPega un enlace de YouTube, Twitch, Kick o TikTok y CutPro recorta el video, ordena los clips por su potencial de interacción, aplica tus plantillas guardadas, renderiza los MP4 finales y los publica en las cuentas que conectaste en cut.pro, al momento o programados. ChatGPT siempre pregunta antes de iniciar un trabajo o publicar algo.\n\nTambién sigue tus canales favoritos: CutPro recorta un directo mientras está al aire, cada 10 minutos, y los mejores momentos están listos antes de que termine la transmisión. Y transcribe audio y video en subtítulos con tiempos, en SRT, VTT o texto.\n\nTodo sucede en tu propio workspace de CutPro, el mismo que usas en cut.pro."
+						"subtitle": "Imagen, video y clips con IA",
+						"description": "Genera imágenes y videos con los mejores modelos de IA en un solo lugar: Veo, Kling, Seedance, Wan, Nano Banana, GPT Image y más. Describe lo que quieres, elige el modelo o deja que CutPro elija el mejor por su precio, y recibe el resultado en el propio ChatGPT. Anima una imagen que acabas de generar, pasa de un primer a un último fotograma, o usa una persona, un producto o un estilo de tus referencias.\n\nCrea personas con IA: personas realistas que se mantienen iguales en cada foto y cada video, hechas a partir de rasgos o de personajes listos. Pon una persona en cualquier video en lugar de quien aparece en él, conservando la escena, la cámara, el movimiento y el sonido. Ideal para UGC, anuncios y canales sin rostro.\n\nCutPro también encuentra los mejores momentos de un video largo y los convierte en clips verticales cortos, con subtítulos. Pega un enlace de YouTube, Twitch, Kick o TikTok y CutPro lo recorta, ordena los clips, aplica tus plantillas, renderiza los MP4 y los publica en las cuentas que conectaste en cut.pro, al momento o programados. Recorta directos mientras están al aire y transcribe audio y video.\n\nChatGPT siempre muestra el precio y pregunta antes de generar, iniciar un trabajo o publicar algo. Todo sucede en tu propio workspace de CutPro, el mismo que usas en cut.pro."
 					}
 				}
 			}

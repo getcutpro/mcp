@@ -13,7 +13,7 @@ import { z } from "zod";
 const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
 // Keep in sync with package.json and server.json on every release.
-const SERVER_VERSION = "2.0.1";
+const SERVER_VERSION = "2.1.0";
 
 type Creds = { apiKey: string; workspaceId?: string };
 
