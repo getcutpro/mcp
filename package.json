@@ -1,6 +1,6 @@
 {
 	"name": "@cutpro/mcp",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"mcpName": "io.github.getcutpro/cutpro",
 	"description": "CutPro MCP server: AI image and video generation with any model, AI personas, and AI clipping, as MCP tools for AI clients",
 	"author": "Lucas Toledo",
@@ -44,13 +44,16 @@
 		"dev": "bun run src/index.ts",
 		"start": "node dist/index.js",
 		"start:http": "MCP_TRANSPORT=http node dist/index.js",
-		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target node --minify",
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target node --minify && cp src/widget.html dist/",
 		"typecheck": "bun x tsc --noEmit",
 		"plugin:openai": "rm -rf .plugin cutpro-openai.zip && mkdir .plugin && cp openai/plugin.json openai/mcp.json .plugin/ && cp -r plugin/skills plugin/assets .plugin/ && cd .plugin && zip -qr ../cutpro-openai.zip . && cd .. && rm -rf .plugin",
 		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.30.0",
+		"@modelcontextprotocol/express": "^2.0.2",
+		"@modelcontextprotocol/node": "^2.1.1",
+		"@modelcontextprotocol/server": "^2.3.1",
+		"@modelcontextprotocol/server-legacy": "^2.3.1",
 		"express": "^5.2.1",
 		"ioredis": "^6.0.0",
 		"zod": "^4.4.3"
