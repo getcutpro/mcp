@@ -1,8 +1,8 @@
 {
 	"name": "cutpro",
 	"displayName": "CutPro",
-	"version": "1.0.0",
-	"description": "Turn long videos and live streams into short clips with AI, then render them and post to TikTok, Instagram and YouTube. Also transcribes audio and video.",
+	"version": "1.1.0",
+	"description": "Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), create realistic AI personas and put them in any video, and turn long videos and live streams into short clips ready for TikTok, Instagram and YouTube. Also transcribes audio and video.",
 	"author": {
 		"name": "CutPro",
 		"url": "https://cut.pro"
@@ -11,6 +11,12 @@
 	"repository": "https://github.com/getcutpro/mcp",
 	"license": "MIT",
 	"keywords": [
+		"ai video",
+		"ai image",
+		"image generation",
+		"video generation",
+		"ai persona",
+		"ugc",
 		"video",
 		"clips",
 		"shorts",

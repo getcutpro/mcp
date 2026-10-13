@@ -4,11 +4,15 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
 [![Smithery](https://img.shields.io/badge/Smithery-contact--8lma%2Fcutpro-7C3AED?style=flat-square)](https://smithery.ai/servers/contact-8lma/cutpro)
 
-A Model Context Protocol (MCP) server that turns long videos into viral clips with AI. It exposes the full [CutPro API](https://cut.pro/docs/api-reference) as tools, so an LLM can run the whole flow: analyze a video, clip the best moments, render the final MP4, and publish to TikTok, Instagram and YouTube.
+A Model Context Protocol (MCP) server for AI images, videos, personas and clips. It exposes the full [CutPro API](https://cut.pro/docs/api-reference) as tools, so an LLM can:
+
+- **Generate images and videos with any top model**: Veo, Kling, Seedance, Wan, MiniMax, Nano Banana, GPT Image, Seedream and more, from a prompt or from reference images, with each model's live price.
+- **Create AI personas**: realistic people that stay consistent across photos and videos, then swap them into any video while scene, camera, motion and sound stay.
+- **Clip long videos and live streams**: find the best moments, render the final MP4 and publish to TikTok, Instagram and YouTube.
 
 ### Key features
 
-- **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: workspace, balance, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections.
+- **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: image and video generation, personas, workspace, balance, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections.
 - **Runs everywhere**. stdio for local clients (Claude Code, Cursor, Claude Desktop, Windsurf, VS Code, Cline, Zed) and a hosted Streamable HTTP endpoint with OAuth for ChatGPT and Claude.ai.
 
 ## Getting started
@@ -16,7 +20,7 @@ A Model Context Protocol (MCP) server that turns long videos into viral clips wi
 ### Requirements
 
 - Node.js 18 or newer.
-- A CutPro account on the **Pro** plan and an API key. Generate one at [cut.pro/studio/me/api-keys](https://cut.pro/studio/me/api-keys).
+- A CutPro account (any plan) and an API key. Generate one at [cut.pro/studio/me/api-keys](https://cut.pro/studio/me/api-keys).
 - An MCP-compatible client.
 
 ### Standard config
@@ -161,7 +165,11 @@ In OAuth mode the user signs in on cut.pro and approves the app there; cut.pro c
 
 The tools are built from the API's own OpenAPI spec (`/api/v1/openapi.json`), so they always match the [API reference](https://cut.pro/docs/api-reference): one tool per endpoint, named after its `operationId` in snake case (`analyzeVideo` is `analyze_video`, `createSubmission` is `create_submission`), with the endpoint's own parameters, descriptions and responses. A new endpoint becomes a tool within ten minutes of reaching the API, with no new release of this package.
 
-The usual flow: `analyze_video`, `create_submission`, `get_submission` until it completes, `list_clips`, `render_clip`, `get_render` and `download_render`.
+The usual flows:
+
+- **Image or video**: `list_generation_models`, `create_generation` with the agreed price, `get_generation` until it is ready. Pass a ready image's `output.image_id` to animate it.
+- **Persona**: `get_persona_catalog`, `create_persona`, `get_persona` until its photo is ready, `save_persona`, then `quote_persona_swap` and `create_persona_video` to put it in a video.
+- **Clips**: `analyze_video`, `create_submission`, `get_submission` until it completes, `list_clips`, `render_clip`, `get_render` and `download_render`.
 
 Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELETE` are destructive, and a route declares more in its `x-mcp` extension (spending credits, publishing to a social network, reaching an arbitrary public URL). Routes that need a file uploaded from disk are listed only by the local (stdio) server, since a chat client cannot send bytes.
 

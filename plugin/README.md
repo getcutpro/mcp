@@ -1,8 +1,12 @@
 # CutPro for Claude
 
-CutPro turns long videos and live streams into short vertical clips with AI, then renders them and posts them to TikTok, Instagram and YouTube. It also transcribes audio and video into timed captions.
+CutPro puts the best AI image and video models in Claude, creates AI personas and turns long videos into short clips.
 
-This plugin connects Claude to the hosted CutPro server at `https://mcp.cut.pro` and adds a skill that teaches Claude the CutPro workflows: previewing a video before clipping, following a job until it finishes, rendering clips, following a channel's live broadcasts and publishing with your confirmation.
+- **Images and videos with any model.** Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more: describe it, pick a model or let Claude pick the best one for the price, and animate any image into a video.
+- **AI personas.** Realistic people that stay the same in every photo and video, from traits or ready-made characters, put into any video in place of the person in it. Made for UGC, ads and faceless channels.
+- **Clips.** The best moments of a long video or a live stream as short captioned vertical clips, rendered and posted to TikTok, Instagram and YouTube. It also transcribes audio and video.
+
+This plugin connects Claude to the hosted CutPro server at `https://mcp.cut.pro` and adds a skill that teaches Claude the CutPro workflows. Claude always tells you the price and asks before generating, starting a job or publishing.
 
 ## Install
 
