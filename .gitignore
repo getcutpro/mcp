@@ -3,3 +3,4 @@ dist/
 .env
 *.tgz
 cutpro-openai.zip
+plugin/evals/results/

@@ -7,7 +7,7 @@
 [![MCP 2026-07-28](https://img.shields.io/badge/MCP-2026--07--28-7C3AED?style=flat-square)](https://modelcontextprotocol.io/specification/2026-07-28)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7C3AED?style=flat-square)](LICENSE)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
-[![Smithery](https://img.shields.io/badge/Smithery-contact--8lma%2Fcutpro-7C3AED?style=flat-square)](https://smithery.ai/servers/contact-8lma/cutpro)
+[![Smithery](https://img.shields.io/badge/Smithery-cutpro%2Fmcp-7C3AED?style=flat-square)](https://smithery.ai/servers/cutpro/mcp)
 
 A Model Context Protocol (MCP) server for AI images, videos, personas and clips. It exposes the full [CutPro API](https://cut.pro/docs/api-reference) as tools, so an LLM can:
 
@@ -53,6 +53,7 @@ Most clients use the same JSON. Add your API key under `env`:
 
 [<img src="https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white" alt="Install in VS Code">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522cutpro%2522%252C%2522command%2522%253A%2522npx%2522%252C%2522args%2522%253A%255B%2522-y%2522%252C%2522%2540cutpro%252Fmcp%2540latest%2522%255D%257D)
 [<img src="https://img.shields.io/badge/Cursor-Install_Server-000000?style=flat-square&logo=cursor&logoColor=white" alt="Install in Cursor">](https://cursor.com/en/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
+[<img src="https://img.shields.io/badge/Cursor-Connect_hosted-000000?style=flat-square&logo=cursor&logoColor=white" alt="Connect the hosted server in Cursor">](https://cursor.com/en/install-mcp?name=cutpro&config=eyJ1cmwiOiJodHRwczovL21jcC5jdXQucHJvIn0=)
 [<img src="https://img.shields.io/badge/LM_Studio-Install_Server-4A26C9?style=flat-square" alt="Install in LM Studio">](https://lmstudio.ai/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
 [<img src="https://img.shields.io/badge/Goose-Install_Server-1A1A1A?style=flat-square" alt="Install in Goose">](goose://extension?cmd=npx&arg=-y&arg=%40cutpro%2Fmcp%40latest&id=cutpro&name=CutPro&description=AI%20video%20clipping%20via%20the%20CutPro%20API)
 
@@ -203,7 +204,19 @@ Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELE
 
 <!-- tools:start -->
 
-89 tools, generated from the live API spec.
+90 tools and 5 prompts, generated from the live API spec and the server.
+
+#### Prompts
+
+Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
+
+| Prompt              | What it does                                                                 |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `generate_video`    | Turn an idea into a video with Veo, Kling, Seedance, Wan or any other model. |
+| `product_ad`        | An ad image of your product, animated into a vertical video ready to post.   |
+| `create_persona`    | A realistic person that stays the same in every photo and video.             |
+| `clip_and_schedule` | The best moments of a long video, rendered and scheduled one per day.        |
+| `transcribe`        | Timed captions of a video or audio, plus a short summary.                    |
 
 #### Workspace
 
@@ -266,10 +279,11 @@ Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELE
 
 #### Connections
 
-| Tool               | What it does     | Notes |
-| ------------------ | ---------------- | ----- |
-| `list_connections` | List connections |       |
-| `get_connection`   | Get a connection |       |
+| Tool                  | What it does                       | Notes |
+| --------------------- | ---------------------------------- | ----- |
+| `list_connections`    | List connections                   |       |
+| `get_connection_link` | Get the link to connect an account |       |
+| `get_connection`      | Get a connection                   |       |
 
 #### Monitoring
 
