@@ -26,11 +26,7 @@ function isPublicAddress(address: string): boolean {
 }
 
 // The socket connects to the addresses checked here, so a second resolution (DNS rebinding) cannot swap in an internal one.
-function publicLookup(
-	hostname: string,
-	options: { all?: boolean },
-	callback: (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void,
-): void {
+function publicLookup(hostname: string, options: { all?: boolean }, callback: (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void): void {
 	lookup(hostname, { all: true }, (error, addresses) => {
 		if (error) return callback(error, []);
 		const [first] = addresses;

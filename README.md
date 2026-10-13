@@ -39,13 +39,13 @@ Most clients use the same JSON. Add your API key under `env`:
 
 ```json
 {
-  "mcpServers": {
-    "cutpro": {
-      "command": "npx",
-      "args": ["-y", "@cutpro/mcp@latest"],
-      "env": { "CUTPRO_API_KEY": "<your-api-key>" }
-    }
-  }
+	"mcpServers": {
+		"cutpro": {
+			"command": "npx",
+			"args": ["-y", "@cutpro/mcp@latest"],
+			"env": { "CUTPRO_API_KEY": "<your-api-key>" }
+		}
+	}
 }
 ```
 
@@ -64,6 +64,7 @@ After installing via a button, add your `CUTPRO_API_KEY` to the server's `env`.
 ```bash
 claude mcp add cutpro --env CUTPRO_API_KEY=<your-api-key> -- npx -y @cutpro/mcp@latest
 ```
+
 </details>
 
 <details>
@@ -73,15 +74,16 @@ Add to `claude_desktop_config.json` (Settings, Developer, Edit Config):
 
 ```json
 {
-  "mcpServers": {
-    "cutpro": {
-      "command": "npx",
-      "args": ["-y", "@cutpro/mcp@latest"],
-      "env": { "CUTPRO_API_KEY": "<your-api-key>" }
-    }
-  }
+	"mcpServers": {
+		"cutpro": {
+			"command": "npx",
+			"args": ["-y", "@cutpro/mcp@latest"],
+			"env": { "CUTPRO_API_KEY": "<your-api-key>" }
+		}
+	}
 }
 ```
+
 </details>
 
 <details>
@@ -102,6 +104,7 @@ Open the MCP Servers panel, choose Configure, and add the standard config above.
 ```bash
 gemini mcp add cutpro npx -y @cutpro/mcp@latest -e CUTPRO_API_KEY=<your-api-key>
 ```
+
 </details>
 
 <details>
@@ -115,6 +118,7 @@ command = "npx"
 args = ["-y", "@cutpro/mcp@latest"]
 env = { "CUTPRO_API_KEY" = "<your-api-key>" }
 ```
+
 </details>
 
 <details>
@@ -138,6 +142,7 @@ The plugin bundles the hosted server with a skill that teaches Claude the CutPro
 claude plugin marketplace add getcutpro/mcp
 claude plugin install cutpro@cutpro
 ```
+
 </details>
 
 ## Updates
@@ -154,24 +159,24 @@ Every release is listed with its notes in [Releases](https://github.com/getcutpr
 
 The server is configured with environment variables.
 
-| Variable | Description | Required |
-| --- | --- | --- |
-| `CUTPRO_API_KEY` | Your CutPro API key. | Yes (stdio) |
-| `CUTPRO_WORKSPACE_ID` | Selects the workspace for multi-workspace keys. | No |
-| `CUTPRO_API_URL` | Override the API base URL. Defaults to `https://api.cut.pro/api/v1`. | No |
-| `CUTPRO_MCP_AUTO_UPDATE` | `0` keeps the installed version instead of switching to the newest release. | No |
+| Variable                 | Description                                                                 | Required    |
+| ------------------------ | --------------------------------------------------------------------------- | ----------- |
+| `CUTPRO_API_KEY`         | Your CutPro API key.                                                        | Yes (stdio) |
+| `CUTPRO_WORKSPACE_ID`    | Selects the workspace for multi-workspace keys.                             | No          |
+| `CUTPRO_API_URL`         | Override the API base URL. Defaults to `https://api.cut.pro/api/v1`.        | No          |
+| `CUTPRO_MCP_AUTO_UPDATE` | `0` keeps the installed version instead of switching to the newest release. | No          |
 
 <details>
 <summary>Self-hosting the remote (Streamable HTTP + OAuth)</summary>
 
-| Variable | Description |
-| --- | --- |
-| `MCP_TRANSPORT=http` / `PORT` | Serve Streamable HTTP at the root instead of stdio. |
-| `MCP_OAUTH=1` | Enable the full OAuth 2.1 layer (discovery, DCR, PKCE) for browser clients. |
-| `MCP_PUBLIC_URL` | Public endpoint, e.g. `https://mcp.cut.pro`. Its origin becomes the OAuth issuer. |
-| `MCP_REDIS_URL` | Back OAuth state with Redis so it survives restarts and scales across instances. |
-| `CUTPRO_APP_URL` | Where the consent screen lives. Defaults to `https://cut.pro`. |
-| `OPENAI_APPS_CHALLENGE` | Domain verification token from the OpenAI plugin portal, served at `/.well-known/openai-apps-challenge`. |
+| Variable                      | Description                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `MCP_TRANSPORT=http` / `PORT` | Serve Streamable HTTP at the root instead of stdio.                                                      |
+| `MCP_OAUTH=1`                 | Enable the full OAuth 2.1 layer (discovery, DCR, PKCE) for browser clients.                              |
+| `MCP_PUBLIC_URL`              | Public endpoint, e.g. `https://mcp.cut.pro`. Its origin becomes the OAuth issuer.                        |
+| `MCP_REDIS_URL`               | Back OAuth state with Redis so it survives restarts and scales across instances.                         |
+| `CUTPRO_APP_URL`              | Where the consent screen lives. Defaults to `https://cut.pro`.                                           |
+| `OPENAI_APPS_CHALLENGE`       | Domain verification token from the OpenAI plugin portal, served at `/.well-known/openai-apps-challenge`. |
 
 ```bash
 MCP_TRANSPORT=http PORT=8787 MCP_OAUTH=1 \
@@ -197,161 +202,162 @@ Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELE
 ### All tools
 
 <!-- tools:start -->
+
 89 tools, generated from the live API spec.
 
 #### Workspace
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `get_workspace` | Get current workspace |  |
+| Tool            | What it does          | Notes |
+| --------------- | --------------------- | ----- |
+| `get_workspace` | Get current workspace |       |
 
 #### Balance
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `get_balance` | Get balance |  |
-| `get_balance_history` | Get credit history |  |
+| Tool                  | What it does       | Notes |
+| --------------------- | ------------------ | ----- |
+| `get_balance`         | Get balance        |       |
+| `get_balance_history` | Get credit history |       |
 
 #### Videos
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `create_video_upload` | Start an upload | local server only |
+| Tool                              | What it does                | Notes             |
+| --------------------------------- | --------------------------- | ----------------- |
+| `create_video_upload`             | Start an upload             | local server only |
 | `complete_video_multipart_upload` | Finalize a multipart upload | local server only |
-| `abort_video_multipart_upload` | Discard a multipart upload | local server only |
-| `complete_video_upload` | Complete an upload | local server only |
-| `list_videos` | List videos |  |
-| `delete_video` | Delete a video |  |
+| `abort_video_multipart_upload`    | Discard a multipart upload  | local server only |
+| `complete_video_upload`           | Complete an upload          | local server only |
+| `list_videos`                     | List videos                 |                   |
+| `delete_video`                    | Delete a video              |                   |
 
 #### Submissions
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `create_submission` | Submit a video for clipping |  |
-| `analyze_video` | Analyze a video |  |
-| `list_submissions` | List submissions |  |
-| `get_submission` | Get submission |  |
-| `delete_submission` | Delete submission |  |
-| `retry_submission` | Retry a failed submission |  |
+| Tool                | What it does                | Notes |
+| ------------------- | --------------------------- | ----- |
+| `create_submission` | Submit a video for clipping |       |
+| `analyze_video`     | Analyze a video             |       |
+| `list_submissions`  | List submissions            |       |
+| `get_submission`    | Get submission              |       |
+| `delete_submission` | Delete submission           |       |
+| `retry_submission`  | Retry a failed submission   |       |
 
 #### Clips
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `apply_template` | Apply template to clips |  |
-| `list_clips` | List generated clips | opens the CutPro player |
-| `delete_clip` | Delete a clip |  |
-| `download_clip_subtitles` | Download a clip's captions |  |
+| Tool                      | What it does               | Notes                   |
+| ------------------------- | -------------------------- | ----------------------- |
+| `apply_template`          | Apply template to clips    |                         |
+| `list_clips`              | List generated clips       | opens the CutPro player |
+| `delete_clip`             | Delete a clip              |                         |
+| `download_clip_subtitles` | Download a clip's captions |                         |
 
 #### Renders
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `render_clip` | Render a clip | opens the CutPro player |
-| `render_broadcast_clip` | Render a broadcast clip |  |
-| `get_render_limits` | Get render quota |  |
-| `create_render` | Render an edit |  |
-| `list_renders` | List renders |  |
-| `create_bulk_download` | Start a bulk download |  |
-| `get_bulk_download` | Get bulk download status |  |
-| `get_render` | Get render status | opens the CutPro player |
-| `delete_render` | Cancel or delete a render |  |
-| `download_render` | Get render download URL | opens the CutPro player |
+| Tool                    | What it does              | Notes                   |
+| ----------------------- | ------------------------- | ----------------------- |
+| `render_clip`           | Render a clip             | opens the CutPro player |
+| `render_broadcast_clip` | Render a broadcast clip   |                         |
+| `get_render_limits`     | Get render quota          |                         |
+| `create_render`         | Render an edit            |                         |
+| `list_renders`          | List renders              |                         |
+| `create_bulk_download`  | Start a bulk download     |                         |
+| `get_bulk_download`     | Get bulk download status  |                         |
+| `get_render`            | Get render status         | opens the CutPro player |
+| `delete_render`         | Cancel or delete a render |                         |
+| `download_render`       | Get render download URL   | opens the CutPro player |
 
 #### Connections
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `list_connections` | List connections |  |
-| `get_connection` | Get a connection |  |
+| Tool               | What it does     | Notes |
+| ------------------ | ---------------- | ----- |
+| `list_connections` | List connections |       |
+| `get_connection`   | Get a connection |       |
 
 #### Monitoring
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `list_monitors` | List monitored channels |  |
-| `create_monitor` | Monitor a channel |  |
-| `get_monitor` | Get a monitored channel |  |
-| `update_monitor` | Update a monitor |  |
-| `delete_monitor` | Stop watching a channel |  |
-| `start_monitor` | Start monitoring |  |
-| `stop_monitor` | Stop monitoring |  |
-| `list_broadcasts` | List broadcasts of a live monitor |  |
-| `list_broadcast_clips` | List clips of a broadcast |  |
-| `apply_broadcast_template` | Apply template to broadcast clips |  |
+| Tool                       | What it does                      | Notes |
+| -------------------------- | --------------------------------- | ----- |
+| `list_monitors`            | List monitored channels           |       |
+| `create_monitor`           | Monitor a channel                 |       |
+| `get_monitor`              | Get a monitored channel           |       |
+| `update_monitor`           | Update a monitor                  |       |
+| `delete_monitor`           | Stop watching a channel           |       |
+| `start_monitor`            | Start monitoring                  |       |
+| `stop_monitor`             | Stop monitoring                   |       |
+| `list_broadcasts`          | List broadcasts of a live monitor |       |
+| `list_broadcast_clips`     | List clips of a broadcast         |       |
+| `apply_broadcast_template` | Apply template to broadcast clips |       |
 
 #### Posts
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `create_post` | Create a post |  |
-| `list_posts` | List posts |  |
-| `get_post` | Get a post |  |
-| `cancel_post` | Cancel a post |  |
-| `update_post` | Update a post |  |
-| `publish_post` | Trigger publish |  |
-| `retry_post_item` | Retry a failed item |  |
-| `delete_post_item` | Delete a post item |  |
+| Tool               | What it does        | Notes |
+| ------------------ | ------------------- | ----- |
+| `create_post`      | Create a post       |       |
+| `list_posts`       | List posts          |       |
+| `get_post`         | Get a post          |       |
+| `cancel_post`      | Cancel a post       |       |
+| `update_post`      | Update a post       |       |
+| `publish_post`     | Trigger publish     |       |
+| `retry_post_item`  | Retry a failed item |       |
+| `delete_post_item` | Delete a post item  |       |
 
 #### Templates
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `list_templates` | List templates |  |
+| Tool             | What it does   | Notes |
+| ---------------- | -------------- | ----- |
+| `list_templates` | List templates |       |
 
 #### Transcriptions
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `create_transcription_upload` | Start an upload | local server only |
-| `create_transcription` | Transcribe a media file |  |
-| `list_transcriptions` | List transcriptions |  |
-| `get_transcription` | Get transcription status |  |
-| `delete_transcription` | Delete a transcription |  |
-| `get_transcription_cues` | Get the transcript as JSON |  |
-| `download_transcription` | Download the transcript as a subtitle file |  |
+| Tool                          | What it does                               | Notes             |
+| ----------------------------- | ------------------------------------------ | ----------------- |
+| `create_transcription_upload` | Start an upload                            | local server only |
+| `create_transcription`        | Transcribe a media file                    |                   |
+| `list_transcriptions`         | List transcriptions                        |                   |
+| `get_transcription`           | Get transcription status                   |                   |
+| `delete_transcription`        | Delete a transcription                     |                   |
+| `get_transcription_cues`      | Get the transcript as JSON                 |                   |
+| `download_transcription`      | Download the transcript as a subtitle file |                   |
 
 #### Personas
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `get_persona_catalog` | Get traits, prices and limits |  |
-| `list_persona_presets` | List ready-made characters |  |
-| `create_persona_from_preset` | Create a persona from a ready-made character | opens the CutPro player |
-| `favorite_persona_preset` | Star a ready-made character |  |
-| `list_personas` | List personas | opens the CutPro player |
-| `create_persona` | Create a persona | opens the CutPro player |
-| `upload_persona_face` | Upload a reference photo | local server only |
-| `quote_persona_swap` | Price a swap video |  |
-| `create_persona_source_upload` | Upload a source video | local server only |
-| `complete_persona_source_upload` | Complete a source video upload | local server only |
-| `get_persona` | Get a persona | opens the CutPro player |
-| `delete_persona` | Delete a persona |  |
-| `regenerate_persona` | Regenerate or edit the persona photo | opens the CutPro player |
-| `restore_persona_version` | Restore a persona version |  |
-| `rate_persona_version` | Rate a persona photo |  |
-| `rate_persona_video` | Rate a persona video |  |
-| `save_persona` | Save or rename a persona |  |
-| `create_persona_video` | Create a persona video | spends credits, asks first, opens the CutPro player |
-| `list_persona_videos` | List a persona's videos | opens the CutPro player |
-| `get_persona_video` | Get a persona video | opens the CutPro player |
-| `read_persona_shot_product` | Read a product from its page link |  |
-| `upload_persona_shot_photo` | Upload a product photo | local server only |
-| `create_persona_shot` | Create a persona photo | spends credits, asks first |
-| `list_persona_shots` | List a persona's photos |  |
-| `get_persona_shot` | Get a persona photo |  |
+| Tool                             | What it does                                 | Notes                                               |
+| -------------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| `get_persona_catalog`            | Get traits, prices and limits                |                                                     |
+| `list_persona_presets`           | List ready-made characters                   |                                                     |
+| `create_persona_from_preset`     | Create a persona from a ready-made character | opens the CutPro player                             |
+| `favorite_persona_preset`        | Star a ready-made character                  |                                                     |
+| `list_personas`                  | List personas                                | opens the CutPro player                             |
+| `create_persona`                 | Create a persona                             | opens the CutPro player                             |
+| `upload_persona_face`            | Upload a reference photo                     | local server only                                   |
+| `quote_persona_swap`             | Price a swap video                           |                                                     |
+| `create_persona_source_upload`   | Upload a source video                        | local server only                                   |
+| `complete_persona_source_upload` | Complete a source video upload               | local server only                                   |
+| `get_persona`                    | Get a persona                                | opens the CutPro player                             |
+| `delete_persona`                 | Delete a persona                             |                                                     |
+| `regenerate_persona`             | Regenerate or edit the persona photo         | opens the CutPro player                             |
+| `restore_persona_version`        | Restore a persona version                    |                                                     |
+| `rate_persona_version`           | Rate a persona photo                         |                                                     |
+| `rate_persona_video`             | Rate a persona video                         |                                                     |
+| `save_persona`                   | Save or rename a persona                     |                                                     |
+| `create_persona_video`           | Create a persona video                       | spends credits, asks first, opens the CutPro player |
+| `list_persona_videos`            | List a persona's videos                      | opens the CutPro player                             |
+| `get_persona_video`              | Get a persona video                          | opens the CutPro player                             |
+| `read_persona_shot_product`      | Read a product from its page link            |                                                     |
+| `upload_persona_shot_photo`      | Upload a product photo                       | local server only                                   |
+| `create_persona_shot`            | Create a persona photo                       | spends credits, asks first                          |
+| `list_persona_shots`             | List a persona's photos                      |                                                     |
+| `get_persona_shot`               | Get a persona photo                          |                                                     |
 
 #### Generations
 
-| Tool | What it does | Notes |
-| --- | --- | --- |
-| `list_generation_models` | List image and video models and their prices |  |
-| `upload_generation_image` | Upload a reference image | local server only |
-| `create_generation` | Generate an image or a video | spends credits, asks first, opens the CutPro player |
-| `list_generations` | List generations | opens the CutPro player |
-| `get_generation` | Get a generation | opens the CutPro player |
-| `delete_generation` | Delete a generation |  |
-| `download_generation` | Get the download link of a generation |  |
+| Tool                      | What it does                                 | Notes                                               |
+| ------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| `list_generation_models`  | List image and video models and their prices |                                                     |
+| `upload_generation_image` | Upload a reference image                     | local server only                                   |
+| `create_generation`       | Generate an image or a video                 | spends credits, asks first, opens the CutPro player |
+| `list_generations`        | List generations                             | opens the CutPro player                             |
+| `get_generation`          | Get a generation                             | opens the CutPro player                             |
+| `delete_generation`       | Delete a generation                          |                                                     |
+| `download_generation`     | Get the download link of a generation        |                                                     |
 
 <!-- tools:end -->
 

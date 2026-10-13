@@ -32,7 +32,6 @@ A persona is a realistic AI person that stays the same across photos and videos,
 4. `save_persona` keeps it, with a name.
 5. To put the persona in a video, the video has to be in the library: `create_persona_source_upload` and `complete_persona_source_upload` (local server only), or a `media_id` already there. `quote_persona_swap` gives the price, and `create_persona_video` with that price replaces the main person while the scene, camera, motion and sound stay. Poll `get_persona_video` until `download_url` is set.
 
-
 ## Clip a video
 
 1. `analyze_video` with the public URL. Show the title, duration and `credits_cost`. When `credits_unlimited` is true the job is not billed.

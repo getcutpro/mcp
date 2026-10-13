@@ -2,6 +2,14 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/api-reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 2.3.1 (2026-10-13)
+
+- Security: the auto-update only accepts a plain `X.Y.Z` release number from npm before it reaches the `npx` command line.
+- Security: the player only listens to messages from its host and loads media from the CutPro CDN alone.
+- Security: request bodies are capped at 1 MB before authentication.
+- CI actions are pinned by commit, the MCP Registry publisher is verified by checksum, and CodeQL scans every change.
+- Code is formatted with Prettier, checked in CI.
+
 ## 2.3.0 (2026-10-13)
 
 - Local installs update themselves: when npm has a newer release, the server hands the session to it, even from a pinned version or a stale `npx` cache. `CUTPRO_MCP_AUTO_UPDATE=0` opts out and keeps the update notice.

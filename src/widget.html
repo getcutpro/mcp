@@ -1,242 +1,380 @@
 <!doctype html>
 <html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- cdn.cut.pro refuses a Referer from outside cut.pro; with none it serves the signed file. -->
-<meta name="referrer" content="no-referrer" />
-<style>
-	:root {
-		color-scheme: light dark;
-		--bg: var(--color-background-primary, light-dark(#ffffff, #141414));
-		--surface: var(--color-background-secondary, light-dark(#f4f4f5, #1f1f1f));
-		--text: var(--color-text-primary, light-dark(#18181b, #fafafa));
-		--muted: var(--color-text-secondary, light-dark(#71717a, #a1a1aa));
-		--border: var(--color-border-primary, light-dark(#e4e4e7, #2e2e2e));
-		--accent: light-dark(#4f46e5, #8b85f5);
-		--danger: var(--color-text-danger, light-dark(#dc2626, #f87171));
-		--radius: var(--border-radius-lg, 12px);
-		font-family: var(--font-sans, system-ui, sans-serif);
-	}
-	* { box-sizing: border-box; }
-	body { margin: 0; background: transparent; color: var(--text); font-size: 14px; }
-	#root { padding: 12px; display: grid; gap: 12px; }
-	.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-	.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: grid; }
-	.media { width: 100%; display: block; background: #000; max-height: 520px; object-fit: contain; }
-	.body { padding: 10px 12px; display: grid; gap: 6px; }
-	.title { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
-	.meta { color: var(--muted); font-size: 12px; }
-	.error { color: var(--danger); }
-	.actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
-	button { font: inherit; font-size: 13px; border-radius: 999px; padding: 6px 12px; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-	button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-	.wait { aspect-ratio: 16 / 9; display: grid; place-items: center; gap: 8px; color: var(--muted); background: var(--surface); }
-	.bar { width: 60%; height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
-	.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script>
-	const SITE = "https://cut.pro";
-	const POLL_MS = 8000;
-	const STRINGS = {
-		en: { open: "Open in CutPro", download: "Download", animate: "Animate", schedule: "Schedule post", useInVideo: "Put in a video", generating: "Generating", rendering: "Rendering", failed: "Failed", credits: "credits", eta: "about {s} s left", rating: "rating" },
-		pt: { open: "Abrir no CutPro", download: "Baixar", animate: "Animar", schedule: "Agendar post", useInVideo: "Colocar num vídeo", generating: "Gerando", rendering: "Renderizando", failed: "Falhou", credits: "créditos", eta: "faltam uns {s} s", rating: "nota" },
-		es: { open: "Abrir en CutPro", download: "Descargar", animate: "Animar", schedule: "Programar publicación", useInVideo: "Poner en un video", generating: "Generando", rendering: "Renderizando", failed: "Falló", credits: "créditos", eta: "faltan unos {s} s", rating: "nota" },
-	};
-	let t = STRINGS.en;
-	let hostCapabilities = {};
-	let toolName = "";
-	let toolArgs = {};
-	let pollTimer = null;
-	let nextId = 1;
-	const pending = new Map();
-	const root = document.getElementById("root");
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- cdn.cut.pro refuses a Referer from outside cut.pro; with none it serves the signed file. -->
+		<meta name="referrer" content="no-referrer" />
+		<style>
+			:root {
+				color-scheme: light dark;
+				--bg: var(--color-background-primary, light-dark(#ffffff, #141414));
+				--surface: var(--color-background-secondary, light-dark(#f4f4f5, #1f1f1f));
+				--text: var(--color-text-primary, light-dark(#18181b, #fafafa));
+				--muted: var(--color-text-secondary, light-dark(#71717a, #a1a1aa));
+				--border: var(--color-border-primary, light-dark(#e4e4e7, #2e2e2e));
+				--accent: light-dark(#4f46e5, #8b85f5);
+				--danger: var(--color-text-danger, light-dark(#dc2626, #f87171));
+				--radius: var(--border-radius-lg, 12px);
+				font-family: var(--font-sans, system-ui, sans-serif);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: transparent;
+				color: var(--text);
+				font-size: 14px;
+			}
+			#root {
+				padding: 12px;
+				display: grid;
+				gap: 12px;
+			}
+			.grid {
+				display: grid;
+				gap: 12px;
+				grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+			}
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: var(--radius);
+				overflow: hidden;
+				display: grid;
+			}
+			.media {
+				width: 100%;
+				display: block;
+				background: #000;
+				max-height: 520px;
+				object-fit: contain;
+			}
+			.body {
+				padding: 10px 12px;
+				display: grid;
+				gap: 6px;
+			}
+			.title {
+				font-weight: 600;
+				line-height: 1.3;
+				overflow-wrap: anywhere;
+			}
+			.meta {
+				color: var(--muted);
+				font-size: 12px;
+			}
+			.error {
+				color: var(--danger);
+			}
+			.actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				padding: 0 12px 12px;
+			}
+			button {
+				font: inherit;
+				font-size: 13px;
+				border-radius: 999px;
+				padding: 6px 12px;
+				cursor: pointer;
+				border: 1px solid var(--border);
+				background: var(--bg);
+				color: var(--text);
+			}
+			button.primary {
+				background: var(--accent);
+				border-color: var(--accent);
+				color: #fff;
+			}
+			.wait {
+				aspect-ratio: 16 / 9;
+				display: grid;
+				place-items: center;
+				gap: 8px;
+				color: var(--muted);
+				background: var(--surface);
+			}
+			.bar {
+				width: 60%;
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border);
+				overflow: hidden;
+			}
+			.bar > i {
+				display: block;
+				height: 100%;
+				width: 0;
+				background: var(--accent);
+				transition: width 1s linear;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script>
+			const SITE = "https://cut.pro";
+			const POLL_MS = 8000;
+			const STRINGS = {
+				en: {
+					open: "Open in CutPro",
+					download: "Download",
+					animate: "Animate",
+					schedule: "Schedule post",
+					useInVideo: "Put in a video",
+					generating: "Generating",
+					rendering: "Rendering",
+					failed: "Failed",
+					credits: "credits",
+					eta: "about {s} s left",
+					rating: "rating",
+				},
+				pt: {
+					open: "Abrir no CutPro",
+					download: "Baixar",
+					animate: "Animar",
+					schedule: "Agendar post",
+					useInVideo: "Colocar num vídeo",
+					generating: "Gerando",
+					rendering: "Renderizando",
+					failed: "Falhou",
+					credits: "créditos",
+					eta: "faltam uns {s} s",
+					rating: "nota",
+				},
+				es: {
+					open: "Abrir en CutPro",
+					download: "Descargar",
+					animate: "Animar",
+					schedule: "Programar publicación",
+					useInVideo: "Poner en un video",
+					generating: "Generando",
+					rendering: "Renderizando",
+					failed: "Falló",
+					credits: "créditos",
+					eta: "faltan unos {s} s",
+					rating: "nota",
+				},
+			};
+			let t = STRINGS.en;
+			let hostCapabilities = {};
+			let toolName = "";
+			let toolArgs = {};
+			let pollTimer = null;
+			let nextId = 1;
+			const pending = new Map();
+			const root = document.getElementById("root");
 
-	function request(method, params) {
-		const id = nextId++;
-		window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
-		return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
-	}
+			function request(method, params) {
+				const id = nextId++;
+				window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+				return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+			}
 
-	function notify(method, params) {
-		window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
-	}
+			function notify(method, params) {
+				window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+			}
 
-	window.addEventListener("message", (event) => {
-		const message = event.data;
-		if (!message || message.jsonrpc !== "2.0") return;
-		if (message.id !== undefined && pending.has(message.id) && !message.method) {
-			const { resolve, reject } = pending.get(message.id);
-			pending.delete(message.id);
-			message.error ? reject(message.error) : resolve(message.result);
-			return;
-		}
-		if (message.method === "ui/notifications/tool-input") toolArgs = message.params?.arguments ?? {};
-		if (message.method === "ui/notifications/tool-result") show(payloadOf(message.params));
-		if (message.method === "ui/notifications/host-context-changed") applyContext(message.params);
-		if (message.method === "ui/resource-teardown") {
-			clearTimeout(pollTimer);
-			window.parent.postMessage({ jsonrpc: "2.0", id: message.id, result: {} }, "*");
-		}
-	});
+			window.addEventListener("message", (event) => {
+				if (event.source !== window.parent) return;
+				const message = event.data;
+				if (!message || message.jsonrpc !== "2.0") return;
+				if (message.id !== undefined && pending.has(message.id) && !message.method) {
+					const { resolve, reject } = pending.get(message.id);
+					pending.delete(message.id);
+					message.error ? reject(message.error) : resolve(message.result);
+					return;
+				}
+				if (message.method === "ui/notifications/tool-input") toolArgs = message.params?.arguments ?? {};
+				if (message.method === "ui/notifications/tool-result") show(payloadOf(message.params));
+				if (message.method === "ui/notifications/host-context-changed") applyContext(message.params);
+				if (message.method === "ui/resource-teardown") {
+					clearTimeout(pollTimer);
+					window.parent.postMessage({ jsonrpc: "2.0", id: message.id, result: {} }, "*");
+				}
+			});
 
-	function payloadOf(result) {
-		if (!result || result.isError) return null;
-		if (result.structuredContent) return result.structuredContent;
-		const text = result.content?.find((block) => block.type === "text")?.text;
-		try {
-			return text ? JSON.parse(text) : null;
-		} catch {
-			return null;
-		}
-	}
+			function payloadOf(result) {
+				if (!result || result.isError) return null;
+				if (result.structuredContent) return result.structuredContent;
+				const text = result.content?.find((block) => block.type === "text")?.text;
+				try {
+					return text ? JSON.parse(text) : null;
+				} catch {
+					return null;
+				}
+			}
 
-	function applyContext(context) {
-		if (!context) return;
-		const language = (context.locale || navigator.language || "en").slice(0, 2);
-		t = STRINGS[language] || STRINGS.en;
-		for (const [name, value] of Object.entries(context.styles?.variables ?? {})) if (value) document.documentElement.style.setProperty(name, value);
-		if (context.toolInfo?.tool?.name) toolName = context.toolInfo.tool.name;
-	}
+			function applyContext(context) {
+				if (!context) return;
+				const language = (context.locale || navigator.language || "en").slice(0, 2);
+				t = STRINGS[language] || STRINGS.en;
+				for (const [name, value] of Object.entries(context.styles?.variables ?? {})) if (value) document.documentElement.style.setProperty(name, value);
+				if (context.toolInfo?.tool?.name) toolName = context.toolInfo.tool.name;
+			}
 
-	function element(tag, attributes = {}, children = []) {
-		const node = document.createElement(tag);
-		for (const [key, value] of Object.entries(attributes)) {
-			if (value === undefined || value === null || value === false) continue;
-			if (key === "onclick") node.addEventListener("click", value);
-			else if (key === "text") node.textContent = value;
-			else node.setAttribute(key, value === true ? "" : value);
-		}
-		for (const child of children) if (child) node.append(child);
-		return node;
-	}
+			function element(tag, attributes = {}, children = []) {
+				const node = document.createElement(tag);
+				for (const [key, value] of Object.entries(attributes)) {
+					if (value === undefined || value === null || value === false) continue;
+					if (key === "onclick") node.addEventListener("click", value);
+					else if (key === "text") node.textContent = value;
+					else node.setAttribute(key, value === true ? "" : value);
+				}
+				for (const child of children) if (child) node.append(child);
+				return node;
+			}
 
-	const openLink = (url) => request("ui/open-link", { url }).catch(() => {});
-	const say = (text) => request("ui/message", { role: "user", content: { type: "text", text } }).catch(() => {});
-	const button = (label, onclick, primary) => element("button", { class: primary ? "primary" : undefined, text: label, onclick });
+			const openLink = (url) => request("ui/open-link", { url }).catch(() => {});
+			const say = (text) => request("ui/message", { role: "user", content: { type: "text", text } }).catch(() => {});
+			const button = (label, onclick, primary) => element("button", { class: primary ? "primary" : undefined, text: label, onclick });
 
-	function mediaOf(url, poster, isVideo) {
-		if (!url) return null;
-		return isVideo ? element("video", { class: "media", src: url, poster, controls: true, playsinline: true, preload: "metadata" }) : element("img", { class: "media", src: url, alt: "" });
-	}
+			function mediaOf(url, poster, isVideo) {
+				if (!url) return null;
+				return isVideo ? element("video", { class: "media", src: url, poster, controls: true, playsinline: true, preload: "metadata" }) : element("img", { class: "media", src: url, alt: "" });
+			}
 
-	function waiting(label, expectedSeconds, startedAt) {
-		const bar = element("i");
-		const node = element("div", { class: "wait" }, [element("div", { text: label }), element("div", { class: "bar" }, [bar])]);
-		if (expectedSeconds) {
-			const started = startedAt ? Date.parse(startedAt) : Date.now();
-			const left = Math.max(0, Math.round(expectedSeconds - (Date.now() - started) / 1000));
-			bar.style.width = `${Math.min(95, 100 - (left / expectedSeconds) * 100)}%`;
-			node.append(element("div", { class: "meta", text: t.eta.replace("{s}", String(left)) }));
-		}
-		return node;
-	}
+			function waiting(label, expectedSeconds, startedAt) {
+				const bar = element("i");
+				const node = element("div", { class: "wait" }, [element("div", { text: label }), element("div", { class: "bar" }, [bar])]);
+				if (expectedSeconds) {
+					const started = startedAt ? Date.parse(startedAt) : Date.now();
+					const left = Math.max(0, Math.round(expectedSeconds - (Date.now() - started) / 1000));
+					bar.style.width = `${Math.min(95, 100 - (left / expectedSeconds) * 100)}%`;
+					node.append(element("div", { class: "meta", text: t.eta.replace("{s}", String(left)) }));
+				}
+				return node;
+			}
 
-	function card(media, title, meta, actions, error) {
-		return element("div", { class: "card" }, [
-			media,
-			element("div", { class: "body" }, [title ? element("div", { class: "title", text: title }) : null, meta ? element("div", { class: "meta", text: meta }) : null, error ? element("div", { class: "meta error", text: `${t.failed}: ${error}` }) : null]),
-			actions?.length ? element("div", { class: "actions" }, actions) : null,
-		]);
-	}
+			function card(media, title, meta, actions, error) {
+				return element("div", { class: "card" }, [
+					media,
+					element("div", { class: "body" }, [
+						title ? element("div", { class: "title", text: title }) : null,
+						meta ? element("div", { class: "meta", text: meta }) : null,
+						error ? element("div", { class: "meta error", text: `${t.failed}: ${error}` }) : null,
+					]),
+					actions?.length ? element("div", { class: "actions" }, actions) : null,
+				]);
+			}
 
-	function generationCard(generation) {
-		const ready = generation.status === "ready" && generation.output;
-		const isVideo = generation.kind === "video";
-		const meta = [generation.model_name, generation.seconds ? `${generation.seconds} s` : null, generation.aspect_ratio, `${generation.credits_charged} ${t.credits}`].filter(Boolean).join(" · ");
-		const actions = [];
-		if (ready) {
-			actions.push(button(t.open, () => openLink(generation.edit_id ? `${SITE}/studio/editor/${generation.edit_id}` : `${SITE}/studio/generations`), true));
-			if (!isVideo && generation.output.image_id) actions.push(button(t.animate, () => say(`Animate the image of CutPro generation ${generation.id} (output.image_id ${generation.output.image_id}) into a video.`)));
-			if (isVideo && generation.edit_id) actions.push(button(t.schedule, () => say(`Schedule a post with the video of CutPro generation ${generation.id} (edit_id ${generation.edit_id}).`)));
-		}
-		const media = ready ? mediaOf(generation.output.url, generation.output.thumbnail_url, isVideo) : generation.status === "processing" ? waiting(t.generating, generation.expected_seconds, generation.created_at) : null;
-		return card(media, generation.prompt, meta, actions, generation.status === "failed" ? generation.error_code : null);
-	}
+			function generationCard(generation) {
+				const ready = generation.status === "ready" && generation.output;
+				const isVideo = generation.kind === "video";
+				const meta = [generation.model_name, generation.seconds ? `${generation.seconds} s` : null, generation.aspect_ratio, `${generation.credits_charged} ${t.credits}`].filter(Boolean).join(" · ");
+				const actions = [];
+				if (ready) {
+					actions.push(button(t.open, () => openLink(generation.edit_id ? `${SITE}/studio/editor/${generation.edit_id}` : `${SITE}/studio/generations`), true));
+					if (!isVideo && generation.output.image_id)
+						actions.push(button(t.animate, () => say(`Animate the image of CutPro generation ${generation.id} (output.image_id ${generation.output.image_id}) into a video.`)));
+					if (isVideo && generation.edit_id) actions.push(button(t.schedule, () => say(`Schedule a post with the video of CutPro generation ${generation.id} (edit_id ${generation.edit_id}).`)));
+				}
+				const media = ready
+					? mediaOf(generation.output.url, generation.output.thumbnail_url, isVideo)
+					: generation.status === "processing"
+						? waiting(t.generating, generation.expected_seconds, generation.created_at)
+						: null;
+				return card(media, generation.prompt, meta, actions, generation.status === "failed" ? generation.error_code : null);
+			}
 
-	function personaCard(persona) {
-		const ready = persona.image_status === "ready" && persona.image_url;
-		const actions = ready
-			? [button(t.open, () => openLink(`${SITE}/studio/personas/${persona.id}`), true), button(t.useInVideo, () => say(`Put the CutPro persona ${persona.name || persona.id} (id ${persona.id}) into a video.`))]
-			: [];
-		const media = ready ? mediaOf(persona.image_url, null, false) : persona.image_status === "generating" ? waiting(t.generating, persona.expected_seconds, persona.started_at) : null;
-		return card(media, persona.name, persona.description, actions, persona.image_status === "failed" ? persona.error_code : null);
-	}
+			function personaCard(persona) {
+				const ready = persona.image_status === "ready" && persona.image_url;
+				const actions = ready
+					? [
+							button(t.open, () => openLink(`${SITE}/studio/personas/${persona.id}`), true),
+							button(t.useInVideo, () => say(`Put the CutPro persona ${persona.name || persona.id} (id ${persona.id}) into a video.`)),
+						]
+					: [];
+				const media = ready ? mediaOf(persona.image_url, null, false) : persona.image_status === "generating" ? waiting(t.generating, persona.expected_seconds, persona.started_at) : null;
+				return card(media, persona.name, persona.description, actions, persona.image_status === "failed" ? persona.error_code : null);
+			}
 
-	function videoCard(video) {
-		const ready = video.status === "ready" && video.download_url;
-		const actions = ready ? [button(t.download, () => openLink(video.download_url), true), video.edit_id ? button(t.schedule, () => say(`Schedule a post with the CutPro persona video ${video.id} (edit_id ${video.edit_id}).`)) : null] : [];
-		const media = ready ? mediaOf(video.download_url, video.thumbnail_url, true) : video.status === "processing" ? waiting(t.generating, video.expected_seconds, video.created_at) : null;
-		return card(media, null, video.duration_seconds ? `${video.duration_seconds} s · ${video.credits_charged} ${t.credits}` : null, actions, video.status === "failed" ? video.error_code : null);
-	}
+			function videoCard(video) {
+				const ready = video.status === "ready" && video.download_url;
+				const actions = ready
+					? [
+							button(t.download, () => openLink(video.download_url), true),
+							video.edit_id ? button(t.schedule, () => say(`Schedule a post with the CutPro persona video ${video.id} (edit_id ${video.edit_id}).`)) : null,
+						]
+					: [];
+				const media = ready ? mediaOf(video.download_url, video.thumbnail_url, true) : video.status === "processing" ? waiting(t.generating, video.expected_seconds, video.created_at) : null;
+				return card(media, null, video.duration_seconds ? `${video.duration_seconds} s · ${video.credits_charged} ${t.credits}` : null, actions, video.status === "failed" ? video.error_code : null);
+			}
 
-	function renderCard(render) {
-		const done = render.status === "completed";
-		const actions = render.edit_id ? [button(t.open, () => openLink(`${SITE}/studio/editor/${render.edit_id}`), done)] : [];
-		const media = done ? null : render.status === "failed" ? null : waiting(`${t.rendering} ${render.progress ?? 0}%`);
-		return card(media, render.name, [render.output_resolution, render.status].filter(Boolean).join(" · "), actions, render.status === "failed" ? render.status : null);
-	}
+			function renderCard(render) {
+				const done = render.status === "completed";
+				const actions = render.edit_id ? [button(t.open, () => openLink(`${SITE}/studio/editor/${render.edit_id}`), done)] : [];
+				const media = done ? null : render.status === "failed" ? null : waiting(`${t.rendering} ${render.progress ?? 0}%`);
+				return card(media, render.name, [render.output_resolution, render.status].filter(Boolean).join(" · "), actions, render.status === "failed" ? render.status : null);
+			}
 
-	function clipCard(clip) {
-		const media = mediaOf(clip.play_url || clip.download_url, clip.thumbnail_url, true);
-		const meta = [`${Math.round(clip.start_time)}-${Math.round(clip.end_time)} s`, clip.rating !== undefined ? `${t.rating} ${clip.rating}` : null].filter(Boolean).join(" · ");
-		return card(media, clip.title, meta, [button(t.schedule, () => say(`Render and schedule a post with the CutPro clip ${clip.id}.`))]);
-	}
+			function clipCard(clip) {
+				const media = mediaOf(clip.play_url || clip.download_url, clip.thumbnail_url, true);
+				const meta = [`${Math.round(clip.start_time)}-${Math.round(clip.end_time)} s`, clip.rating !== undefined ? `${t.rating} ${clip.rating}` : null].filter(Boolean).join(" · ");
+				return card(media, clip.title, meta, [button(t.schedule, () => say(`Render and schedule a post with the CutPro clip ${clip.id}.`))]);
+			}
 
-	// Which read tool follows a job to the end, and with which arguments, for every tool that starts one.
-	function follow(payload) {
-		if (toolName === "create_generation" || toolName === "get_generation") return payload.status === "processing" ? { name: "get_generation", arguments: { id: payload.id } } : null;
-		if (toolName === "create_persona_video" || toolName === "get_persona_video") return payload.status === "processing" ? { name: "get_persona_video", arguments: { id: toolArgs.id, videoId: payload.id } } : null;
-		if (payload.image_status === "generating") return { name: "get_persona", arguments: { id: payload.id } };
-		if (payload.output_resolution !== undefined && !payload.download_url) {
-			if (payload.status === "completed") return { name: "download_render", arguments: { renderId: payload.id }, now: true };
-			if (!["failed", "expired", "cancelled"].includes(payload.status)) return { name: "get_render", arguments: { renderId: payload.id } };
-		}
-		return null;
-	}
+			// Which read tool follows a job to the end, and with which arguments, for every tool that starts one.
+			function follow(payload) {
+				if (toolName === "create_generation" || toolName === "get_generation") return payload.status === "processing" ? { name: "get_generation", arguments: { id: payload.id } } : null;
+				if (toolName === "create_persona_video" || toolName === "get_persona_video")
+					return payload.status === "processing" ? { name: "get_persona_video", arguments: { id: toolArgs.id, videoId: payload.id } } : null;
+				if (payload.image_status === "generating") return { name: "get_persona", arguments: { id: payload.id } };
+				if (payload.output_resolution !== undefined && !payload.download_url) {
+					if (payload.status === "completed") return { name: "download_render", arguments: { renderId: payload.id }, now: true };
+					if (!["failed", "expired", "cancelled"].includes(payload.status)) return { name: "get_render", arguments: { renderId: payload.id } };
+				}
+				return null;
+			}
 
-	function view(payload) {
-		if (payload.generations) return element("div", { class: "grid" }, payload.generations.map(generationCard));
-		if (payload.clips) return element("div", { class: "grid" }, payload.clips.map(clipCard));
-		if (payload.personas) return element("div", { class: "grid" }, payload.personas.map(personaCard));
-		if (payload.videos) return element("div", { class: "grid" }, payload.videos.map(videoCard));
-		if (payload.kind && payload.model) return generationCard(payload);
-		if (toolName === "create_generation") return generationCard({ ...payload, kind: toolArgs.kind, prompt: toolArgs.prompt, model_name: toolArgs.model, created_at: new Date().toISOString() });
-		if (payload.image_status !== undefined) return personaCard(payload);
-		if (payload.replace !== undefined || toolName === "create_persona_video") return videoCard(payload);
-		if (payload.output_resolution !== undefined && payload.download_url) return card(mediaOf(payload.download_url, null, true), null, payload.output_resolution, [button(t.download, () => openLink(payload.download_url), true)]);
-		if (payload.output_resolution !== undefined) return renderCard(payload);
-		if (payload.url && payload.filename) return card(mediaOf(payload.url, null, true), payload.filename, null, [button(t.download, () => openLink(payload.url), true)]);
-		return null;
-	}
+			function view(payload) {
+				if (payload.generations) return element("div", { class: "grid" }, payload.generations.map(generationCard));
+				if (payload.clips) return element("div", { class: "grid" }, payload.clips.map(clipCard));
+				if (payload.personas) return element("div", { class: "grid" }, payload.personas.map(personaCard));
+				if (payload.videos) return element("div", { class: "grid" }, payload.videos.map(videoCard));
+				if (payload.kind && payload.model) return generationCard(payload);
+				if (toolName === "create_generation") return generationCard({ ...payload, kind: toolArgs.kind, prompt: toolArgs.prompt, model_name: toolArgs.model, created_at: new Date().toISOString() });
+				if (payload.image_status !== undefined) return personaCard(payload);
+				if (payload.replace !== undefined || toolName === "create_persona_video") return videoCard(payload);
+				if (payload.output_resolution !== undefined && payload.download_url)
+					return card(mediaOf(payload.download_url, null, true), null, payload.output_resolution, [button(t.download, () => openLink(payload.download_url), true)]);
+				if (payload.output_resolution !== undefined) return renderCard(payload);
+				if (payload.url && payload.filename) return card(mediaOf(payload.url, null, true), payload.filename, null, [button(t.download, () => openLink(payload.url), true)]);
+				return null;
+			}
 
-	function show(payload) {
-		clearTimeout(pollTimer);
-		const node = payload && view(payload);
-		root.replaceChildren(...(node ? [node] : []));
-		const next = payload && hostCapabilities.serverTools ? follow(payload) : null;
-		if (next) {
-			pollTimer = setTimeout(() => {
-				request("tools/call", { name: next.name, arguments: next.arguments })
-					.then((result) => {
-						toolName = next.name;
-						show(payloadOf(result));
-					})
-					.catch(() => {});
-			}, next.now ? 0 : POLL_MS);
-		}
-	}
+			function show(payload) {
+				clearTimeout(pollTimer);
+				const node = payload && view(payload);
+				root.replaceChildren(...(node ? [node] : []));
+				const next = payload && hostCapabilities.serverTools ? follow(payload) : null;
+				if (next) {
+					pollTimer = setTimeout(
+						() => {
+							request("tools/call", { name: next.name, arguments: next.arguments })
+								.then((result) => {
+									toolName = next.name;
+									show(payloadOf(result));
+								})
+								.catch(() => {});
+						},
+						next.now ? 0 : POLL_MS,
+					);
+				}
+			}
 
-	new ResizeObserver(() => notify("ui/notifications/size-changed", { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight })).observe(document.documentElement);
+			new ResizeObserver(() => notify("ui/notifications/size-changed", { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight })).observe(
+				document.documentElement,
+			);
 
-	request("ui/initialize", { appInfo: { name: "CutPro", version: "1" }, appCapabilities: { availableDisplayModes: ["inline"] }, protocolVersion: "2026-01-26" }).then((result) => {
-		hostCapabilities = result?.hostCapabilities ?? {};
-		applyContext(result?.hostContext);
-		notify("ui/notifications/initialized", {});
-	});
-</script>
-</body>
+			request("ui/initialize", { appInfo: { name: "CutPro", version: "1" }, appCapabilities: { availableDisplayModes: ["inline"] }, protocolVersion: "2026-01-26" }).then((result) => {
+				hostCapabilities = result?.hostCapabilities ?? {};
+				applyContext(result?.hostContext);
+				notify("ui/notifications/initialized", {});
+			});
+		</script>
+	</body>
 </html>

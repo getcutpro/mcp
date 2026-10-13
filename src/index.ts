@@ -71,10 +71,7 @@ const OPERATION = z.object({
 	responses: z.record(z.string(), z.object({ content: z.record(z.string(), z.object({ schema: SCHEMA })).optional() })).optional(),
 	"x-mcp": z
 		.object({
-			annotations: z
-				.object({ readOnlyHint: z.boolean(), destructiveHint: z.boolean(), idempotentHint: z.boolean(), openWorldHint: z.boolean() })
-				.partial()
-				.optional(),
+			annotations: z.object({ readOnlyHint: z.boolean(), destructiveHint: z.boolean(), idempotentHint: z.boolean(), openWorldHint: z.boolean() }).partial().optional(),
 			localFiles: z.boolean().optional(),
 			ui: z.boolean().optional(),
 		})
@@ -88,7 +85,7 @@ const UI_EXTENSION = "io.modelcontextprotocol/ui";
 const WIDGET_URI = "ui://cutpro/media";
 const WIDGET_MIME = "text/html;profile=mcp-app";
 // Signed media comes from the CDN; nothing else is fetched, so the sandbox stays closed to every other origin.
-const WIDGET_UI = { csp: { resourceDomains: ["https://cdn.cut.pro", "https://cut.pro"] }, prefersBorder: false };
+const WIDGET_UI = { csp: { resourceDomains: ["https://cdn.cut.pro"] }, prefersBorder: false };
 const CONFIRM_SCHEMA = z.object({ confirm: z.boolean() });
 // Sits next to the bundle (the build copies it into dist), and in src when run from source.
 const WIDGET_HTML = readFileSync(new URL("./widget.html", import.meta.url), "utf8");
@@ -214,7 +211,8 @@ async function run(fetcher: () => Promise<unknown>, structured: boolean): Promis
 	}
 }
 
-const NPM_LATEST = z.object({ version: z.string() });
+// Only a plain release number reaches the npx command line, which runs through a shell on Windows.
+const NPM_LATEST = z.object({ version: z.string().regex(/^\d+\.\d+\.\d+$/) });
 
 function isNewer(candidate: string, current: string): boolean {
 	const parts = (version: string) => (version.split("-")[0] ?? "").split(".").map(Number);
@@ -261,8 +259,10 @@ async function writeReadme(path: string): Promise<void> {
 		const rows = endpoints
 			.filter((endpoint) => endpoint.tag === tag)
 			.map((endpoint) => {
-				const notes = [endpoint.charges ? "spends credits, asks first" : null, endpoint.tool._meta ? "opens the CutPro player" : null, endpoint.localFiles ? "local server only" : null].filter(Boolean).join(", ");
-				return `| \`${endpoint.tool.name}\` | ${endpoint.tool.title ?? ""} | ${notes} |`;
+				const notes = [endpoint.charges ? "spends credits, asks first" : null, endpoint.tool._meta ? "opens the CutPro player" : null, endpoint.localFiles ? "local server only" : null]
+					.filter(Boolean)
+					.join(", ");
+				return `| \`${endpoint.tool.name}\` | ${(endpoint.tool.title ?? "").replaceAll("|", "\\|")} | ${notes} |`;
 			});
 		return [`#### ${tag}`, "", "| Tool | What it does | Notes |", "| --- | --- | --- |", ...rows].join("\n");
 	});
@@ -297,7 +297,16 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 	server.setRequestHandler("tools/list", async () => ({ tools: [...(await available()).values()].map((endpoint) => endpoint.tool) }));
 
 	server.setRequestHandler("resources/list", async () => ({
-		resources: [{ uri: WIDGET_URI, name: "cutpro_media", title: "CutPro media", description: "Plays generated images and videos, personas, clips and renders, and follows them until they are ready.", mimeType: WIDGET_MIME, _meta: { ui: WIDGET_UI } }],
+		resources: [
+			{
+				uri: WIDGET_URI,
+				name: "cutpro_media",
+				title: "CutPro media",
+				description: "Plays generated images and videos, personas, clips and renders, and follows them until they are ready.",
+				mimeType: WIDGET_MIME,
+				_meta: { ui: WIDGET_UI },
+			},
+		],
 	}));
 
 	server.setRequestHandler("resources/templates/list", async () => ({ resourceTemplates: [] }));
@@ -317,7 +326,9 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 			const answer = acceptedContent(ctx.mcpReq.inputResponses, "confirm", CONFIRM_SCHEMA);
 			if (!answer && !ctx.mcpReq.inputResponses?.confirm) {
 				return inputRequired({
-					inputRequests: { confirm: inputRequired.elicit({ message: `${endpoint.tool.title ?? endpoint.tool.name}: ${args.credits} CutPro credits will be charged now.`, requestedSchema: CONFIRM_SCHEMA }) },
+					inputRequests: {
+						confirm: inputRequired.elicit({ message: `${endpoint.tool.title ?? endpoint.tool.name}: ${args.credits} CutPro credits will be charged now.`, requestedSchema: CONFIRM_SCHEMA }),
+					},
 				});
 			}
 			if (!answer?.confirm) return DECLINED;
@@ -462,7 +473,8 @@ async function startHttp(port: number): Promise<void> {
 	if (openaiChallenge) app.get("/.well-known/openai-apps-challenge", (_req, res) => void res.type("text/plain").send(openaiChallenge));
 
 	app.get("/.well-known/mcp/catalog.json", (_req, res) => {
-		res.type("application/json")
+		res
+			.type("application/json")
 			.set("Cache-Control", "public, max-age=3600")
 			.json({
 				specVersion: "draft",
@@ -515,7 +527,7 @@ async function startHttp(port: number): Promise<void> {
 		return buildServer({ apiKey, workspaceId: requestInfo?.headers.get("x-workspace-id") ?? process.env.CUTPRO_WORKSPACE_ID }, { localFiles: false });
 	});
 	const mcp = toNodeHandler(handler);
-	app.all("/", express.json({ limit: "4mb" }), ...(guard ? [guard] : []), withKey, (req, res) => void mcp(req, res, req.body));
+	app.all("/", express.json({ limit: "1mb" }), ...(guard ? [guard] : []), withKey, (req, res) => void mcp(req, res, req.body));
 
 	// Registered last so it also catches the SDK auth routes' own body parsers: otherwise express answers an HTML 400 carrying the SyntaxError stack and logs it.
 	const badBody: ErrorRequestHandler = (err, req, res, next) => {
@@ -539,7 +551,9 @@ async function startStdio(): Promise<void> {
 	}
 	const latest = await latestVersion();
 	if (latest && (await handOverToLatest(latest))) return;
-	const notice = latest ? `CutPro MCP ${SERVER_VERSION} is outdated: version ${latest} is available. Tell the user to update: restart the AI app if its config runs "npx -y @cutpro/mcp@latest", or change the command to that.` : null;
+	const notice = latest
+		? `CutPro MCP ${SERVER_VERSION} is outdated: version ${latest} is available. Tell the user to update: restart the AI app if its config runs "npx -y @cutpro/mcp@latest", or change the command to that.`
+		: null;
 	if (notice) process.stderr.write(`${notice}\n`);
 	serveStdio(() => buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, notice }));
 }
