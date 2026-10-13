@@ -8,7 +8,9 @@ A Model Context Protocol (MCP) server for AI images, videos, personas and clips.
 
 - **Generate images and videos with any top model**: Veo, Kling, Seedance, Wan, MiniMax, Nano Banana, GPT Image, Seedream and more, from a prompt or from reference images, with each model's live price.
 - **Create AI personas**: realistic people that stay consistent across photos and videos, then swap them into any video while scene, camera, motion and sound stay.
-- **Clip long videos and live streams**: find the best moments, render the final MP4 and publish to TikTok, Instagram and YouTube.
+- **Clip long videos and live streams**: find the best moments and render the final MP4.
+- **Post and schedule**: publish any clip, generated video or persona video to TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn, Pinterest and Bluesky, now or at a set time.
+- **Transcribe**: any audio or video into timed captions (SRT, VTT, text or JSON).
 
 ### Key features
 

@@ -2,7 +2,7 @@
 	"name": "cutpro",
 	"displayName": "CutPro",
 	"version": "1.1.0",
-	"description": "Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), create realistic AI personas and put them in any video, and turn long videos and live streams into short clips ready for TikTok, Instagram and YouTube. Also transcribes audio and video.",
+	"description": "Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), create realistic AI personas and put them in any video, turn long videos and live streams into short clips, schedule posts to every connected social account, and transcribe audio and video.",
 	"author": {
 		"name": "CutPro",
 		"url": "https://cut.pro"
