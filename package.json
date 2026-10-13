@@ -1,6 +1,6 @@
 {
 	"name": "@cutpro/mcp",
-	"version": "2.3.1",
+	"version": "2.4.0",
 	"mcpName": "io.github.getcutpro/cutpro",
 	"description": "CutPro MCP server: AI image and video generation with any model, AI personas, and AI clipping, as MCP tools for AI clients",
 	"author": "Lucas Toledo",

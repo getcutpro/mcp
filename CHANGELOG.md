@@ -2,6 +2,13 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/api-reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 2.4.0 (2026-10-13)
+
+- Five ready-made prompts, offered by clients as shortcuts: generate a video, product ad, create a persona, clip a video and schedule the week, transcribe and summarize.
+- `get_connection_link`: when an account is missing, the AI hands over a link that opens that network's sign-in in the right workspace, and carries on once it is connected.
+- Plugin evals (`claude plugin eval`) check that Claude reads prices before spending, hands over the connection link and previews before clipping, run in CI against mocked tools.
+- Listed on Smithery as `cutpro/mcp`; `glama.json` for the Glama listing; a Cursor button for the hosted server.
+
 ## 2.3.1 (2026-10-13)
 
 - Security: the auto-update only accepts a plain `X.Y.Z` release number from npm before it reaches the `npx` command line.

@@ -55,7 +55,7 @@ A `type: "video"` monitor clips each new upload instead, and those clips arrive 
 
 Anything with an `edit_id` can be posted: a rendered clip, a broadcast clip, a generated video or a persona video.
 
-1. `list_connections` shows the social accounts connected to the workspace. When the account the user wants is missing, give them https://cut.pro/studio/connections to connect it (TikTok, Instagram, YouTube and the others CutPro supports), then call `list_connections` again and carry on: the user never has to start over.
+1. `list_connections` shows the social accounts connected to the workspace. When the account the user wants is missing, call `get_connection_link` with that network and give the user the link: it opens that network's sign-in on cut.pro, in this workspace, in one click. Then call `list_connections` again and carry on: the user never has to start over.
 2. `create_post` with the `edit_id`s and the chosen `connection_id`s, and per-network `metadata` (title, caption). Pass `scheduled_at` (ISO 8601, in the future, in the user's time zone converted to UTC) to schedule it; leave it out to publish now. Publishing is public and cannot be taken back, so confirm the caption, the accounts and the time first.
 3. `list_posts` shows what is scheduled and what went out. `update_post` moves a scheduled post or changes its text, and `cancel_post` cancels it before it goes out.
 4. Poll `get_post`. A failed item is retried with `retry_post_item` without touching the ones already published.

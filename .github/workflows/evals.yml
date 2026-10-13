@@ -1,0 +1,41 @@
+name: Plugin evals
+
+# Checks that Claude picks the right tools and asks the price before spending, against mocked CutPro tools. Needs the ANTHROPIC_API_KEY secret.
+on:
+  pull_request:
+    paths: ["plugin/**"]
+  push:
+    branches: [main]
+    paths: ["plugin/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - name: Skip without an API key
+        id: key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: echo "present=$([ -n "$ANTHROPIC_API_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.key.outputs.present == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+      - if: steps.key.outputs.present == 'true'
+        name: Run the evals
+        working-directory: plugin
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: claude plugin eval . --trust-plugin --no-publish --ablation none --threshold 0.8 --max-cost-usd 5 --json "$RUNNER_TEMP/evals.json"
+      - if: always() && steps.key.outputs.present == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: plugin-evals
+          path: ${{ runner.temp }}/evals.json

@@ -1,0 +1,1 @@
+{"connections":[{"id":"9001","platform":"tiktok","username":"mychannel","avatar_url":null,"biography":null,"followers_count":1200,"posts_count":40,"likes_count":null,"is_verified":false,"created_at":"2026-09-01T00:00:00.000Z"}],"pagination":{"current_page":1,"total_pages":1,"total_count":1,"has_next_page":false,"has_previous_page":false,"limit":20}}

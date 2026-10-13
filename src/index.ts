@@ -1,5 +1,16 @@
 #!/usr/bin/env node
-import { acceptedContent, createMcpHandler, inputRequired, ResourceNotFoundError, Server, type CallToolResult, type McpRequestContext, type Tool } from "@modelcontextprotocol/server";
+import {
+	acceptedContent,
+	createMcpHandler,
+	inputRequired,
+	ProtocolError,
+	ProtocolErrorCode,
+	ResourceNotFoundError,
+	Server,
+	type CallToolResult,
+	type McpRequestContext,
+	type Tool,
+} from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import { getOAuthProtectedResourceMetadataUrl, mcpAuthRouter, requireBearerAuth } from "@modelcontextprotocol/server-legacy/auth";
@@ -266,7 +277,24 @@ async function writeReadme(path: string): Promise<void> {
 			});
 		return [`#### ${tag}`, "", "| Tool | What it does | Notes |", "| --- | --- | --- |", ...rows].join("\n");
 	});
-	const block = [README_START, `${endpoints.length} tools, generated from the live API spec.`, "", ...sections.flatMap((section) => [section, ""]), README_END].join("\n");
+	const prompts = [
+		"#### Prompts",
+		"",
+		"Ready-made requests your client offers as shortcuts (the `/` menu in Claude).",
+		"",
+		"| Prompt | What it does |",
+		"| --- | --- |",
+		...PROMPTS.map((prompt) => `| \`${prompt.name}\` | ${prompt.description} |`),
+	].join("\n");
+	const block = [
+		README_START,
+		`${endpoints.length} tools and ${PROMPTS.length} prompts, generated from the live API spec and the server.`,
+		"",
+		prompts,
+		"",
+		...sections.flatMap((section) => [section, ""]),
+		README_END,
+	].join("\n");
 	const readme = readFileSync(path, "utf8");
 	const begin = readme.indexOf(README_START);
 	const finish = readme.indexOf(README_END);
@@ -274,12 +302,65 @@ async function writeReadme(path: string): Promise<void> {
 	writeFileSync(path, readme.slice(0, begin) + block + readme.slice(finish + README_END.length));
 }
 
+type PromptRecipe = { name: string; title: string; description: string; arguments: { name: string; description: string; required: boolean }[]; text: (args: Record<string, string>) => string };
+
+// Ready-made requests that clients offer as shortcuts (the "/" menu in Claude), for people who do not know what to ask yet.
+const PROMPTS: PromptRecipe[] = [
+	{
+		name: "generate_video",
+		title: "Generate a video with AI",
+		description: "Turn an idea into a video with Veo, Kling, Seedance, Wan or any other model.",
+		arguments: [
+			{ name: "idea", description: "What the video shows", required: true },
+			{ name: "model", description: "A model name, like Veo or Kling; the best value for the price when left out", required: false },
+		],
+		text: (args) =>
+			`Generate a vertical (9:16) video with CutPro of: ${args.idea}. ${args.model ? `Use ${args.model}.` : "Pick the balanced preset."} Read the models and prices with list_generation_models, tell me the model, the length and the total in credits, and wait for my yes before create_generation. Then follow it until it is ready and show it.`,
+	},
+	{
+		name: "product_ad",
+		title: "Ad for a product",
+		description: "An ad image of your product, animated into a vertical video ready to post.",
+		arguments: [{ name: "product", description: "The product, described in a few words", required: true }],
+		text: (args) =>
+			`Make an ad with CutPro for: ${args.product}. First generate a striking product image (image generation, references mode if I share a photo of the product), show it, then animate it into a 9:16 video passing its output.image_id. Tell me the price of each step and wait for my yes before each one. When the video is ready, offer to schedule it on my connected accounts.`,
+	},
+	{
+		name: "create_persona",
+		title: "Create an AI persona",
+		description: "A realistic person that stays the same in every photo and video.",
+		arguments: [{ name: "description", description: "Who the persona is: age, look, style", required: true }],
+		text: (args) =>
+			`Create a CutPro AI persona: ${args.description}. Read the traits and prices with get_persona_catalog and offer the ready-made characters from list_persona_presets if one fits. Tell me the price, wait for my yes, create it and follow it until the photo is ready, then ask whether to save it.`,
+	},
+	{
+		name: "clip_and_schedule",
+		title: "Clip a video and schedule the week",
+		description: "The best moments of a long video, rendered and scheduled one per day.",
+		arguments: [
+			{ name: "url", description: "Link of a YouTube, Twitch, Kick or TikTok video", required: true },
+			{ name: "accounts", description: "Where to post, like TikTok and Instagram; every connected account when left out", required: false },
+		],
+		text: (args) =>
+			`Clip this video with CutPro: ${args.url}. Show me the cost with analyze_video and wait for my yes. When the clips are ready, pick the 5 best rated, render them and schedule one per day at 6 pm my time on ${args.accounts ?? "my connected accounts"}. If an account I want is not connected, give me its link from get_connection_link and continue once I connect it. Confirm the captions, accounts and times before scheduling.`,
+	},
+	{
+		name: "transcribe",
+		title: "Transcribe and summarize",
+		description: "Timed captions of a video or audio, plus a short summary.",
+		arguments: [{ name: "media", description: "Which video or audio; the latest one in the library when left out", required: false }],
+		text: (args) =>
+			`Transcribe with CutPro ${args.media ?? "my latest video in the library"}. Follow the transcription until it is ready, then give me a short summary with the key moments and their times, and the SRT file link.`,
+	},
+];
+
 const DECLINED: CallToolResult = { content: [{ type: "text", text: "The user did not confirm the charge, so nothing was started and no credits were spent." }], isError: true };
 
 // The list never varies per caller and follows the API spec, so clients and shared caches may keep it as long as the spec refresh.
 const CACHE_HINTS = {
 	"tools/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 	"resources/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"prompts/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 	"resources/read": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 	"server/discover": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 } as const;
@@ -290,7 +371,7 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 	const available = async () => new Map([...(await loadEndpoints())].filter(([, endpoint]) => localFiles || !endpoint.localFiles));
 	const server = new Server(
 		{ name: "cutpro", title: "CutPro", version: SERVER_VERSION, description: SERVER_DESCRIPTION, websiteUrl: SERVER_WEBSITE, icons: SERVER_ICONS },
-		{ capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: {} } }, instructions: notice ?? undefined, cacheHints: CACHE_HINTS },
+		{ capabilities: { tools: {}, resources: {}, prompts: {}, extensions: { [UI_EXTENSION]: {} } }, instructions: notice ?? undefined, cacheHints: CACHE_HINTS },
 	);
 	let noticePending = notice !== null;
 
@@ -310,6 +391,17 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 	}));
 
 	server.setRequestHandler("resources/templates/list", async () => ({ resourceTemplates: [] }));
+
+	server.setRequestHandler("prompts/list", async () => ({ prompts: PROMPTS.map(({ name, title, description, arguments: args }) => ({ name, title, description, arguments: args })) }));
+
+	server.setRequestHandler("prompts/get", async (request) => {
+		const prompt = PROMPTS.find((candidate) => candidate.name === request.params.name);
+		if (!prompt) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Unknown prompt: ${request.params.name}`);
+		const args = request.params.arguments ?? {};
+		const missing = prompt.arguments.find((argument) => argument.required && !args[argument.name]);
+		if (missing) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Missing argument: ${missing.name}`);
+		return { description: prompt.description, messages: [{ role: "user", content: { type: "text", text: prompt.text(args) } }] };
+	});
 
 	server.setRequestHandler("resources/read", async (request) => {
 		if (request.params.uri !== WIDGET_URI) throw new ResourceNotFoundError(request.params.uri);

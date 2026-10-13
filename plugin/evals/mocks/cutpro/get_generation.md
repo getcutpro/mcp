@@ -1,0 +1,1 @@
+{"id":"112500000000000001","kind":"video","status":"processing","model":"google/veo-3.1-lite","model_name":"Veo 3.1 Lite","mode":"text","resolution":"720p","seconds":8,"aspect_ratio":"9:16","prompt":"barista","image_ids":[],"credits_charged":160,"error_code":null,"edit_id":null,"output":null,"expected_seconds":90,"created_at":"2026-10-13T12:00:00.000Z"}
