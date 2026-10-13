@@ -1,6 +1,6 @@
 ---
 name: cutpro
-description: Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more), create realistic AI personas and swap them into videos, and turn long videos and live streams into short clips with CutPro, then render and publish them. Use when the user wants to generate or animate an image or a video, make an AI person or character, put a persona into a video, clip a YouTube, Twitch, Kick or TikTok video, follow a channel's lives, render or download a clip, post to TikTok, Instagram or YouTube, or transcribe audio and video.
+description: Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more), create realistic AI personas and swap them into videos, and turn long videos and live streams into short clips with CutPro, then render and publish them. Use when the user wants to generate or animate an image or a video, make an AI person or character, put a persona into a video, clip a YouTube, Twitch, Kick or TikTok video, follow a channel's lives, render or download a clip, post or schedule posts to TikTok, Instagram, YouTube and other connected accounts, connect a social account, or transcribe audio and video into captions.
 license: MIT
 ---
 
@@ -17,7 +17,7 @@ Tools that spend credits or publish (`create_generation`, `create_persona`, `reg
 1. `list_generation_models` lists every image and video model available right now, with the modes, resolutions, durations, aspect ratios and price of each. When the user names no model, pick from `presets` (`fast`, `balanced`, `best`); when they name one ("make it with Veo", "use Kling"), match it by `name`.
 2. Work out the total: the model's `credits` for the mode and resolution, times `seconds` for a video (`silent_credits` when `audio` is `false`). Tell the user the model, what will be made and the total, and wait for a yes.
 3. `create_generation` with `kind`, `model`, `mode`, `prompt`, `aspect_ratio` (`9:16` for TikTok, Reels and Shorts), `seconds` for a video, and `credits` set to that total. `PRICE_CHANGED` charges nothing and brings the new total in `extra.credits`: tell the user and ask again.
-4. Poll `get_generation` every 10 seconds until `status` is `ready` or `failed`. `expected_seconds` says how long the model usually takes. A failed generation gives its credits back on its own.
+4. Poll `get_generation` every 10 seconds until `status` is `ready` or `failed`. `expected_seconds` says how long the model usually takes. A failed generation gives its credits back on its own. A ready video has an `edit_id`, so it can be posted or scheduled right away (see Publish and schedule).
 5. Show `output.url`. `download_generation` gives the full-quality file, but once taken the credits can no longer be asked back, so only call it when the user wants the file.
 
 To animate an image the user just generated, call `create_generation` again with `kind: "video"`, `mode: "image"` and its `output.image_id` in `image_ids`. `mode: "frames"` goes from a first to a last image, and `mode: "references"` borrows a person, product or style from images (or edits them, for an image). Pictures from the user's disk go up with `upload_generation_image`, available on the local server only. Check `refuses`: some models turn down real faces, minors or public figures.
@@ -52,15 +52,22 @@ A failed submission runs again with `retry_submission`, with the same settings.
 
 A `type: "video"` monitor clips each new upload instead, and those clips arrive as regular submissions in `list_videos`.
 
-## Publish
+## Publish and schedule
 
-1. `list_connections` shows the accounts connected on cut.pro. Connecting a new account happens on cut.pro, not here.
-2. `create_post` with the clips' `edit_id` and the chosen `connection_id`s, now or scheduled. Publishing is public and cannot be taken back, so confirm the caption, the accounts and the time first.
-3. Poll `get_post`. A failed item is retried with `retry_post_item` without touching the ones already published.
+Anything with an `edit_id` can be posted: a rendered clip, a broadcast clip, a generated video or a persona video.
+
+1. `list_connections` shows the social accounts connected to the workspace. When the account the user wants is missing, give them https://cut.pro/studio/connections to connect it (TikTok, Instagram, YouTube and the others CutPro supports), then call `list_connections` again and carry on: the user never has to start over.
+2. `create_post` with the `edit_id`s and the chosen `connection_id`s, and per-network `metadata` (title, caption). Pass `scheduled_at` (ISO 8601, in the future, in the user's time zone converted to UTC) to schedule it; leave it out to publish now. Publishing is public and cannot be taken back, so confirm the caption, the accounts and the time first.
+3. `list_posts` shows what is scheduled and what went out. `update_post` moves a scheduled post or changes its text, and `cancel_post` cancels it before it goes out.
+4. Poll `get_post`. A failed item is retried with `retry_post_item` without touching the ones already published.
 
 ## Transcribe
 
-`create_transcription` with a `media_id` already in the library, then `get_transcription` until it is ready, and `get_transcription_cues` (timed JSON) or `download_transcription` (SRT, VTT or TXT).
+Turns the speech of any video or audio into timed captions, with optional speaker labels, without clipping or rendering anything.
+
+1. A file from the user's disk goes up with `create_transcription_upload` (local server only); a video already in the library is used by its `media_id`.
+2. `create_transcription`, then poll `get_transcription` until it is ready.
+3. `get_transcription_cues` gives the timed text as JSON, good for summarizing, quoting or translating it in the chat. `download_transcription` gives an SRT, VTT or TXT file to hand over.
 
 ## When something fails
 

@@ -14,6 +14,13 @@ const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
 // Keep in sync with package.json and server.json on every release.
 const SERVER_VERSION = "2.1.0";
+const SERVER_DESCRIPTION = "AI images and videos with any model, AI personas, and AI clips from long videos.";
+const SERVER_WEBSITE = "https://cut.pro/docs/api-reference/mcp";
+// Hosted on cut.pro so every client, local or remote, shows the same logo without the server serving files.
+const SERVER_ICONS = [
+	{ src: "https://cut.pro/icons/icon-512.png", mimeType: "image/png", sizes: ["512x512"] },
+	{ src: "https://cut.pro/icons/icon-192.png", mimeType: "image/png", sizes: ["192x192"] },
+];
 
 type Creds = { apiKey: string; workspaceId?: string };
 
@@ -219,7 +226,7 @@ async function updateNotice(): Promise<string | null> {
 function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: boolean; notice?: string | null }): Server {
 	const api = createApi(creds);
 	const available = async () => new Map([...(await loadEndpoints())].filter(([, endpoint]) => localFiles || !endpoint.localFiles));
-	const server = new Server({ name: "cutpro", version: SERVER_VERSION }, { capabilities: { tools: {} }, instructions: notice ?? undefined });
+	const server = new Server({ name: "cutpro", title: "CutPro", version: SERVER_VERSION, description: SERVER_DESCRIPTION, websiteUrl: SERVER_WEBSITE, icons: SERVER_ICONS }, { capabilities: { tools: {} }, instructions: notice ?? undefined });
 	let noticePending = notice !== null;
 
 	server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [...(await available()).values()].map((endpoint) => endpoint.tool) }));
@@ -335,9 +342,10 @@ function serverCard(publicUrl: string): Record<string, unknown> {
 		$schema: "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
 		name: "io.github.getcutpro/cutpro",
 		title: "CutPro",
-		description: "AI clips from long videos: analyze, clip, render and publish via the CutPro API.",
+		description: SERVER_DESCRIPTION,
 		version: SERVER_VERSION,
-		websiteUrl: "https://cut.pro/docs/api-reference/mcp",
+		websiteUrl: SERVER_WEBSITE,
+		icons: SERVER_ICONS,
 		repository: { url: "https://github.com/getcutpro/mcp", source: "github" },
 		remotes: [{ type: "streamable-http", url: publicUrl }],
 	};
@@ -351,6 +359,8 @@ async function startHttp(port: number): Promise<void> {
 
 	const publicUrl = (process.env.MCP_PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, "");
 	const card = serverCard(publicUrl);
+	// Connector lists that show the domain's favicon get the CutPro logo instead of a blank square.
+	app.get("/favicon.ico", (_req, res) => res.redirect(301, "https://cut.pro/icons/favicon.ico"));
 	// The canonical place is <streamable-http-url>/server-card; the .well-known alias serves clients that only look there.
 	const sendCard: RequestHandler = (_req, res) => {
 		res.type("application/mcp-server-card+json").set("Cache-Control", "public, max-age=3600").json(card);
