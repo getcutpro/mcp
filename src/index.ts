@@ -5,14 +5,15 @@ import { toNodeHandler } from "@modelcontextprotocol/node";
 import { getOAuthProtectedResourceMetadataUrl, mcpAuthRouter, requireBearerAuth } from "@modelcontextprotocol/server-legacy/auth";
 import express, { type ErrorRequestHandler, type Request, type RequestHandler } from "express";
 import { CutproOAuthProvider } from "./oauth.js";
-import { readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import pkg from "../package.json" with { type: "json" };
 import { createMemoryKV, createRedisKV } from "./store.js";
 import { z } from "zod";
 
 const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
-// Keep in sync with package.json and server.json on every release.
-const SERVER_VERSION = "2.2.0";
+const SERVER_VERSION = pkg.version;
 const SERVER_DESCRIPTION = "AI images and videos with any model, AI personas, and AI clips from long videos.";
 const SERVER_WEBSITE = "https://cut.pro/docs/api-reference/mcp";
 // Hosted on cut.pro so every client, local or remote, shows the same logo without the server serving files.
@@ -60,6 +61,7 @@ const SCHEMA = z.record(z.string(), z.json());
 type JsonSchema = z.infer<typeof SCHEMA>;
 const OPERATION = z.object({
 	operationId: z.string().optional(),
+	tags: z.array(z.string()).optional(),
 	summary: z.string().optional(),
 	description: z.string().optional(),
 	parameters: z.array(z.object({ name: z.string(), in: z.string(), required: z.boolean().optional(), schema: SCHEMA })).optional(),
@@ -80,7 +82,7 @@ const OPERATION = z.object({
 });
 const SPEC = z.object({ paths: z.record(z.string(), z.record(z.string(), z.unknown())) });
 
-type Endpoint = { tool: Tool; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean; charges: boolean };
+type Endpoint = { tool: Tool; tag: string; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean; charges: boolean };
 
 const UI_EXTENSION = "io.modelcontextprotocol/ui";
 const WIDGET_URI = "ui://cutpro/media";
@@ -140,6 +142,7 @@ function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 
 			const name = operation.operationId.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 			endpoints.set(name, {
+				tag: operation.tags?.[0] ?? "Other",
 				method: method.toUpperCase(),
 				path,
 				queryParams: parameters.filter((parameter) => parameter.in === "query").map((parameter) => parameter.name),
@@ -223,16 +226,52 @@ function isNewer(candidate: string, current: string): boolean {
 	return false;
 }
 
-// The hosted server is always current, but a local install can lag for months behind renamed tools and new routes, so it says so instead of failing quietly.
-async function updateNotice(): Promise<string | null> {
+async function latestVersion(): Promise<string | null> {
 	try {
 		const res = await fetch("https://registry.npmjs.org/@cutpro/mcp/latest", { signal: AbortSignal.timeout(1500) });
 		const latest = NPM_LATEST.safeParse(await res.json());
-		if (!latest.success || !isNewer(latest.data.version, SERVER_VERSION)) return null;
-		return `CutPro MCP ${SERVER_VERSION} is outdated: version ${latest.data.version} is available. Tell the user to update: restart the AI app if its config runs "npx -y @cutpro/mcp@latest", or change the command to that.`;
+		return latest.success && isNewer(latest.data.version, SERVER_VERSION) ? latest.data.version : null;
 	} catch {
 		return null;
 	}
+}
+
+// The hosted server is always current; a local install hands the session to the newest release, so a pinned or cached copy never serves stale code. The child is told not to look again.
+async function handOverToLatest(latest: string): Promise<boolean> {
+	if (process.env.CUTPRO_MCP_AUTO_UPDATE === "0") return false;
+	const child = spawn("npx", ["-y", `@cutpro/mcp@${latest}`], { stdio: "inherit", env: { ...process.env, CUTPRO_MCP_AUTO_UPDATE: "0" }, shell: process.platform === "win32" });
+	const started = await new Promise<boolean>((resolve) => {
+		child.once("spawn", () => resolve(true));
+		child.once("error", () => resolve(false));
+	});
+	if (!started) return false;
+	for (const signal of ["SIGINT", "SIGTERM"] as const) process.on(signal, () => child.kill(signal));
+	child.on("exit", (code) => process.exit(code ?? 0));
+	return true;
+}
+
+const README_START = "<!-- tools:start -->";
+const README_END = "<!-- tools:end -->";
+
+// Rewrites the tool list of the README from the live spec, so the docs list exactly what the server serves.
+async function writeReadme(path: string): Promise<void> {
+	const endpoints = [...(await loadEndpoints()).values()];
+	const tags = [...new Set(endpoints.map((endpoint) => endpoint.tag))];
+	const sections = tags.map((tag) => {
+		const rows = endpoints
+			.filter((endpoint) => endpoint.tag === tag)
+			.map((endpoint) => {
+				const notes = [endpoint.charges ? "spends credits, asks first" : null, endpoint.tool._meta ? "opens the CutPro player" : null, endpoint.localFiles ? "local server only" : null].filter(Boolean).join(", ");
+				return `| \`${endpoint.tool.name}\` | ${endpoint.tool.title ?? ""} | ${notes} |`;
+			});
+		return [`#### ${tag}`, "", "| Tool | What it does | Notes |", "| --- | --- | --- |", ...rows].join("\n");
+	});
+	const block = [README_START, `${endpoints.length} tools, generated from the live API spec.`, "", ...sections.flatMap((section) => [section, ""]), README_END].join("\n");
+	const readme = readFileSync(path, "utf8");
+	const begin = readme.indexOf(README_START);
+	const finish = readme.indexOf(README_END);
+	if (begin === -1 || finish === -1) throw new Error(`${path} has no ${README_START} ... ${README_END} block`);
+	writeFileSync(path, readme.slice(0, begin) + block + readme.slice(finish + README_END.length));
 }
 
 const DECLINED: CallToolResult = { content: [{ type: "text", text: "The user did not confirm the charge, so nothing was started and no credits were spent." }], isError: true };
@@ -498,12 +537,16 @@ async function startStdio(): Promise<void> {
 		process.stderr.write("CUTPRO_API_KEY is not set. Generate one at https://cut.pro/studio/me/api-keys\n");
 		process.exit(1);
 	}
-	const notice = await updateNotice();
+	const latest = await latestVersion();
+	if (latest && (await handOverToLatest(latest))) return;
+	const notice = latest ? `CutPro MCP ${SERVER_VERSION} is outdated: version ${latest} is available. Tell the user to update: restart the AI app if its config runs "npx -y @cutpro/mcp@latest", or change the command to that.` : null;
 	if (notice) process.stderr.write(`${notice}\n`);
 	serveStdio(() => buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, notice }));
 }
 
-if (process.env.MCP_TRANSPORT === "http" || process.env.API_MCP_PORT) {
+if (process.argv[2] === "readme") {
+	await writeReadme(process.argv[3] ?? "README.md");
+} else if (process.env.MCP_TRANSPORT === "http" || process.env.API_MCP_PORT) {
 	await startHttp(Number(process.env.API_MCP_PORT ?? process.env.PORT ?? 8787));
 } else {
 	await startStdio();

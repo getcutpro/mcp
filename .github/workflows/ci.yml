@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun x tsc --noEmit -p tsconfig.json
+      - run: bun run build
+      - name: Answer server/discover on the 2026-07-28 revision
+        run: |
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}' \
+            | CUTPRO_API_KEY=ci CUTPRO_MCP_AUTO_UPDATE=0 timeout 20 node dist/index.js | grep -q '"supportedVersions":\["2026-07-28"\]'
