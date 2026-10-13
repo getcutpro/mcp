@@ -1,6 +1,11 @@
 ## CutPro MCP
 
 [![npm version](https://img.shields.io/npm/v/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
+[![npm downloads](https://img.shields.io/npm/dm/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
+[![CI](https://img.shields.io/github/actions/workflow/status/getcutpro/mcp/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/getcutpro/mcp/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/getcutpro/mcp?style=flat-square&color=7C3AED)](https://github.com/getcutpro/mcp/releases)
+[![MCP 2026-07-28](https://img.shields.io/badge/MCP-2026--07--28-7C3AED?style=flat-square)](https://modelcontextprotocol.io/specification/2026-07-28)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7C3AED?style=flat-square)](LICENSE)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
 [![Smithery](https://img.shields.io/badge/Smithery-contact--8lma%2Fcutpro-7C3AED?style=flat-square)](https://smithery.ai/servers/contact-8lma/cutpro)
 
@@ -135,6 +140,16 @@ claude plugin install cutpro@cutpro
 ```
 </details>
 
+## Updates
+
+Every install stays current on its own:
+
+- **Hosted** (`https://mcp.cut.pro`, the Claude plugin and the ChatGPT app): always the latest release, nothing to do.
+- **Local** (`npx -y @cutpro/mcp@latest`): on start the server checks npm and, when a newer release exists, hands the session to it. This works even for a pinned version or a stale `npx` cache. Set `CUTPRO_MCP_AUTO_UPDATE=0` to stay on the installed version; the server then tells the model an update is available.
+- **Tools**: new API endpoints show up as tools within ten minutes, without any release.
+
+Every release is listed with its notes in [Releases](https://github.com/getcutpro/mcp/releases) and [CHANGELOG.md](CHANGELOG.md).
+
 ## Configuration
 
 The server is configured with environment variables.
@@ -144,6 +159,7 @@ The server is configured with environment variables.
 | `CUTPRO_API_KEY` | Your CutPro API key. | Yes (stdio) |
 | `CUTPRO_WORKSPACE_ID` | Selects the workspace for multi-workspace keys. | No |
 | `CUTPRO_API_URL` | Override the API base URL. Defaults to `https://api.cut.pro/api/v1`. | No |
+| `CUTPRO_MCP_AUTO_UPDATE` | `0` keeps the installed version instead of switching to the newest release. | No |
 
 <details>
 <summary>Self-hosting the remote (Streamable HTTP + OAuth)</summary>
@@ -178,11 +194,174 @@ The usual flows:
 
 Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELETE` are destructive, and a route declares more in its `x-mcp` extension (spending credits, publishing to a social network, reaching an arbitrary public URL). Routes that need a file uploaded from disk are listed only by the local (stdio) server, since a chat client cannot send bytes.
 
+### All tools
+
+<!-- tools:start -->
+89 tools, generated from the live API spec.
+
+#### Workspace
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `get_workspace` | Get current workspace |  |
+
+#### Balance
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `get_balance` | Get balance |  |
+| `get_balance_history` | Get credit history |  |
+
+#### Videos
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `create_video_upload` | Start an upload | local server only |
+| `complete_video_multipart_upload` | Finalize a multipart upload | local server only |
+| `abort_video_multipart_upload` | Discard a multipart upload | local server only |
+| `complete_video_upload` | Complete an upload | local server only |
+| `list_videos` | List videos |  |
+| `delete_video` | Delete a video |  |
+
+#### Submissions
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `create_submission` | Submit a video for clipping |  |
+| `analyze_video` | Analyze a video |  |
+| `list_submissions` | List submissions |  |
+| `get_submission` | Get submission |  |
+| `delete_submission` | Delete submission |  |
+| `retry_submission` | Retry a failed submission |  |
+
+#### Clips
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `apply_template` | Apply template to clips |  |
+| `list_clips` | List generated clips | opens the CutPro player |
+| `delete_clip` | Delete a clip |  |
+| `download_clip_subtitles` | Download a clip's captions |  |
+
+#### Renders
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `render_clip` | Render a clip | opens the CutPro player |
+| `render_broadcast_clip` | Render a broadcast clip |  |
+| `get_render_limits` | Get render quota |  |
+| `create_render` | Render an edit |  |
+| `list_renders` | List renders |  |
+| `create_bulk_download` | Start a bulk download |  |
+| `get_bulk_download` | Get bulk download status |  |
+| `get_render` | Get render status | opens the CutPro player |
+| `delete_render` | Cancel or delete a render |  |
+| `download_render` | Get render download URL | opens the CutPro player |
+
+#### Connections
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `list_connections` | List connections |  |
+| `get_connection` | Get a connection |  |
+
+#### Monitoring
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `list_monitors` | List monitored channels |  |
+| `create_monitor` | Monitor a channel |  |
+| `get_monitor` | Get a monitored channel |  |
+| `update_monitor` | Update a monitor |  |
+| `delete_monitor` | Stop watching a channel |  |
+| `start_monitor` | Start monitoring |  |
+| `stop_monitor` | Stop monitoring |  |
+| `list_broadcasts` | List broadcasts of a live monitor |  |
+| `list_broadcast_clips` | List clips of a broadcast |  |
+| `apply_broadcast_template` | Apply template to broadcast clips |  |
+
+#### Posts
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `create_post` | Create a post |  |
+| `list_posts` | List posts |  |
+| `get_post` | Get a post |  |
+| `cancel_post` | Cancel a post |  |
+| `update_post` | Update a post |  |
+| `publish_post` | Trigger publish |  |
+| `retry_post_item` | Retry a failed item |  |
+| `delete_post_item` | Delete a post item |  |
+
+#### Templates
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `list_templates` | List templates |  |
+
+#### Transcriptions
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `create_transcription_upload` | Start an upload | local server only |
+| `create_transcription` | Transcribe a media file |  |
+| `list_transcriptions` | List transcriptions |  |
+| `get_transcription` | Get transcription status |  |
+| `delete_transcription` | Delete a transcription |  |
+| `get_transcription_cues` | Get the transcript as JSON |  |
+| `download_transcription` | Download the transcript as a subtitle file |  |
+
+#### Personas
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `get_persona_catalog` | Get traits, prices and limits |  |
+| `list_persona_presets` | List ready-made characters |  |
+| `create_persona_from_preset` | Create a persona from a ready-made character | opens the CutPro player |
+| `favorite_persona_preset` | Star a ready-made character |  |
+| `list_personas` | List personas | opens the CutPro player |
+| `create_persona` | Create a persona | opens the CutPro player |
+| `upload_persona_face` | Upload a reference photo | local server only |
+| `quote_persona_swap` | Price a swap video |  |
+| `create_persona_source_upload` | Upload a source video | local server only |
+| `complete_persona_source_upload` | Complete a source video upload | local server only |
+| `get_persona` | Get a persona | opens the CutPro player |
+| `delete_persona` | Delete a persona |  |
+| `regenerate_persona` | Regenerate or edit the persona photo | opens the CutPro player |
+| `restore_persona_version` | Restore a persona version |  |
+| `rate_persona_version` | Rate a persona photo |  |
+| `rate_persona_video` | Rate a persona video |  |
+| `save_persona` | Save or rename a persona |  |
+| `create_persona_video` | Create a persona video | spends credits, asks first, opens the CutPro player |
+| `list_persona_videos` | List a persona's videos | opens the CutPro player |
+| `get_persona_video` | Get a persona video | opens the CutPro player |
+| `read_persona_shot_product` | Read a product from its page link |  |
+| `upload_persona_shot_photo` | Upload a product photo | local server only |
+| `create_persona_shot` | Create a persona photo | spends credits, asks first |
+| `list_persona_shots` | List a persona's photos |  |
+| `get_persona_shot` | Get a persona photo |  |
+
+#### Generations
+
+| Tool | What it does | Notes |
+| --- | --- | --- |
+| `list_generation_models` | List image and video models and their prices |  |
+| `upload_generation_image` | Upload a reference image | local server only |
+| `create_generation` | Generate an image or a video | spends credits, asks first, opens the CutPro player |
+| `list_generations` | List generations | opens the CutPro player |
+| `get_generation` | Get a generation | opens the CutPro player |
+| `delete_generation` | Delete a generation |  |
+| `download_generation` | Get the download link of a generation |  |
+
+<!-- tools:end -->
+
 ## Links
 
 - Docs: [cut.pro/docs/api-reference/mcp](https://cut.pro/docs/api-reference/mcp)
 - npm: [@cutpro/mcp](https://www.npmjs.com/package/@cutpro/mcp)
 - MCP Registry: `io.github.getcutpro/cutpro`
+- Releases: [github.com/getcutpro/mcp/releases](https://github.com/getcutpro/mcp/releases) · [CHANGELOG.md](CHANGELOG.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Security: [SECURITY.md](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License
 

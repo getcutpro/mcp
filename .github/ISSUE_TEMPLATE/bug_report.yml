@@ -1,0 +1,35 @@
+name: Bug report
+description: Something does not work as described.
+labels: [bug]
+body:
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client
+      options: [Claude (claude.ai or Desktop), Claude Code, ChatGPT, Cursor, VS Code, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: server
+    attributes:
+      label: Server
+      options: [Hosted (mcp.cut.pro), Local (npx @cutpro/mcp)]
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      placeholder: create_generation
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you asked, what you expected and what you got, including the error `code`. Never paste an API key or token.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Local server only, from the `serverInfo` your client shows or `npm view @cutpro/mcp version`.

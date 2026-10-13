@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing (OIDC, no token) needs npm 11.5.1 or newer.
+      - run: npm install -g npm@latest
+      - run: bun install
+      - name: Tag matches package.json
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: bun x tsc --noEmit -p tsconfig.json
+      - name: Publish to npm with provenance
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if npm view "@cutpro/mcp@$version" version >/dev/null 2>&1; then
+            echo "@cutpro/mcp@$version is already on npm."
+          else
+            npm publish --provenance --access public
+          fi
+      - name: Package the ChatGPT plugin
+        run: bun run plugin:openai
+      - name: GitHub releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes() { awk -v version="${1#v}" '/^## / { keep = index($0, "## " version " ") == 1; next } keep' CHANGELOG.md; }
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$(notes "$GITHUB_REF_NAME")" --latest cutpro-openai.zip
+          # Older tags without a release get one from their CHANGELOG entry, never marked latest.
+          for tag in $(git tag --list 'v*' --sort=version:refname); do
+            [ "$tag" = "$GITHUB_REF_NAME" ] && continue
+            gh release view "$tag" >/dev/null 2>&1 && continue
+            if [ -n "$(notes "$tag")" ]; then gh release create "$tag" --verify-tag --title "$tag" --notes "$(notes "$tag")" --latest=false; fi
+          done
+      - name: Publish to the MCP Registry
+        run: |
+          curl -sL https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

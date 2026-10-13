@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help with your CutPro account
+    url: https://cut.pro/en/help
+    about: Credits, plans, connected accounts and anything about cut.pro itself.
+  - name: Documentation
+    url: https://cut.pro/docs/api-reference/mcp
+    about: Setup for every client, OAuth and the full API reference.
+  - name: Security problem
+    url: https://github.com/getcutpro/mcp/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue.

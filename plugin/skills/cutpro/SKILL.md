@@ -6,7 +6,7 @@ license: MIT
 
 # CutPro
 
-Every CutPro tool maps to one endpoint of the CutPro API and answers with the API's own JSON. Errors come back as `{ "code": "...", "extra": { ... } }`: switch on `code`, never on wording. Talk to the user in their language.
+Every CutPro tool maps to one endpoint of the CutPro API and answers with the API's own JSON. In clients that show MCP Apps, generations, personas, clips and renders open in a CutPro player that follows the job until it is ready, so there is no need to poll or paste links when the player is on screen. Errors come back as `{ "code": "...", "extra": { ... } }`: switch on `code`, never on wording. Talk to the user in their language.
 
 ## Spend and publish only after the user agrees
 
