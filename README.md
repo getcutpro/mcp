@@ -16,6 +16,9 @@ A Model Context Protocol (MCP) server for AI images, videos, personas and clips.
 
 - **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: image and video generation, personas, workspace, balance, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections.
 - **Runs everywhere**. stdio for local clients (Claude Code, Cursor, Claude Desktop, Windsurf, VS Code, Cline, Zed) and a hosted Streamable HTTP endpoint with OAuth for ChatGPT and Claude.ai.
+- **Latest protocol**. Speaks MCP [2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) (stateless, `server/discover`, cacheable lists, multi round-trip requests) and every earlier revision, on the same endpoint.
+- **Results you can watch**. Clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) show generated images and videos, personas, clips and renders as an inline player that follows a job until it is ready, with buttons to open it in CutPro, animate an image or schedule a post.
+- **Asks before it spends**. On clients that support elicitation, every call that charges credits shows the price and waits for the user's confirmation before anything is charged.
 
 ## Getting started
 

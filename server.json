@@ -3,7 +3,7 @@
 	"name": "io.github.getcutpro/cutpro",
 	"title": "CutPro",
 	"description": "AI images and videos with any model, AI personas, and AI clips from long videos.",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"websiteUrl": "https://cut.pro/docs/api-reference/mcp",
 	"icons": [
 		{
@@ -30,7 +30,7 @@
 			"registryType": "npm",
 			"registryBaseUrl": "https://registry.npmjs.org",
 			"identifier": "@cutpro/mcp",
-			"version": "2.1.0",
+			"version": "2.2.0",
 			"transport": {
 				"type": "stdio"
 			},

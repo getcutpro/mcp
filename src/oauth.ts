@@ -3,12 +3,9 @@ import { lookup, type LookupAddress } from "node:dns";
 import https from "node:https";
 import { isIP } from "node:net";
 import type { Request, Response } from "express";
-import type { OAuthServerProvider, AuthorizationParams } from "@modelcontextprotocol/sdk/server/auth/provider.js";
-import type { OAuthRegisteredClientsStore } from "@modelcontextprotocol/sdk/server/auth/clients.js";
-import type { OAuthClientInformationFull, OAuthTokens, OAuthTokenRevocationRequest } from "@modelcontextprotocol/sdk/shared/auth.js";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { OAuthClientInformationFull, OAuthTokens, OAuthTokenRevocationRequest } from "@modelcontextprotocol/server";
+import { InvalidGrantError, InvalidTokenError, type AuthInfo, type AuthorizationParams, type OAuthRegisteredClientsStore, type OAuthServerProvider } from "@modelcontextprotocol/server-legacy/auth";
 import type { KV } from "./store.js";
-import { InvalidGrantError, InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { z } from "zod";
 
 const CLIENT_TTL_S = 90 * 24 * 3600;

@@ -1,19 +1,18 @@
 #!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { mcpAuthRouter, getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/sdk/server/auth/router.js";
-import { requireBearerAuth } from "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js";
+import { acceptedContent, createMcpHandler, inputRequired, ResourceNotFoundError, Server, type CallToolResult, type McpRequestContext, type Tool } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import { getOAuthProtectedResourceMetadataUrl, mcpAuthRouter, requireBearerAuth } from "@modelcontextprotocol/server-legacy/auth";
 import express, { type ErrorRequestHandler, type Request, type RequestHandler } from "express";
-import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult, type Tool } from "@modelcontextprotocol/sdk/types.js";
 import { CutproOAuthProvider } from "./oauth.js";
+import { readFileSync } from "node:fs";
 import { createMemoryKV, createRedisKV } from "./store.js";
 import { z } from "zod";
 
 const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
 // Keep in sync with package.json and server.json on every release.
-const SERVER_VERSION = "2.1.0";
+const SERVER_VERSION = "2.2.0";
 const SERVER_DESCRIPTION = "AI images and videos with any model, AI personas, and AI clips from long videos.";
 const SERVER_WEBSITE = "https://cut.pro/docs/api-reference/mcp";
 // Hosted on cut.pro so every client, local or remote, shows the same logo without the server serving files.
@@ -57,7 +56,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-const SCHEMA = z.record(z.string(), z.unknown());
+const SCHEMA = z.record(z.string(), z.json());
+type JsonSchema = z.infer<typeof SCHEMA>;
 const OPERATION = z.object({
 	operationId: z.string().optional(),
 	summary: z.string().optional(),
@@ -74,12 +74,22 @@ const OPERATION = z.object({
 				.partial()
 				.optional(),
 			localFiles: z.boolean().optional(),
+			ui: z.boolean().optional(),
 		})
 		.optional(),
 });
 const SPEC = z.object({ paths: z.record(z.string(), z.record(z.string(), z.unknown())) });
 
-type Endpoint = { tool: Tool; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean };
+type Endpoint = { tool: Tool; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean; charges: boolean };
+
+const UI_EXTENSION = "io.modelcontextprotocol/ui";
+const WIDGET_URI = "ui://cutpro/media";
+const WIDGET_MIME = "text/html;profile=mcp-app";
+// Signed media comes from the CDN; nothing else is fetched, so the sandbox stays closed to every other origin.
+const WIDGET_UI = { csp: { resourceDomains: ["https://cdn.cut.pro", "https://cut.pro"] }, prefersBorder: false };
+const CONFIRM_SCHEMA = z.object({ confirm: z.boolean() });
+// Sits next to the bundle (the build copies it into dist), and in src when run from source.
+const WIDGET_HTML = readFileSync(new URL("./widget.html", import.meta.url), "utf8");
 
 const METHODS = ["get", "post", "put", "patch", "delete"];
 // OpenAI and Claude count overwriting as destructive, not only deleting; a route that does more says so in its `x-mcp`.
@@ -104,7 +114,7 @@ function outputSchemaOf(responses: z.infer<typeof OPERATION>["responses"]): Tool
 	const success = Object.entries(responses ?? {})
 		.filter(([status]) => /^2\d\d$/.test(status))
 		.map(([, response]) => response.content?.["application/json"]?.schema);
-	const schemas = success.filter((schema): schema is Record<string, unknown> => schema?.type === "object");
+	const schemas = success.filter((schema): schema is JsonSchema => schema?.type === "object");
 	if (schemas.length === 0 || schemas.length !== success.length) return undefined;
 	const distinct = [...new Map(schemas.map((schema) => [JSON.stringify(schema), schema])).values()];
 	const [only] = distinct;
@@ -121,7 +131,7 @@ function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 			if (!operation.operationId) continue;
 			const parameters = operation.parameters ?? [];
 			const body = operation.requestBody?.content["application/json"]?.schema;
-			const properties: Record<string, Record<string, unknown>> = { ...body?.properties };
+			const properties: Record<string, JsonSchema> = { ...body?.properties };
 			const required = [...(body?.required ?? [])];
 			for (const parameter of parameters) {
 				properties[parameter.name] = parameter.schema;
@@ -135,12 +145,15 @@ function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 				queryParams: parameters.filter((parameter) => parameter.in === "query").map((parameter) => parameter.name),
 				bodyKeys: body ? Object.keys(body.properties ?? {}) : null,
 				localFiles: operation["x-mcp"]?.localFiles ?? false,
+				// A route that takes the agreed `credits` spends them; the user confirms that price in the client itself where it can ask.
+				charges: method === "post" && typeof body?.properties?.credits === "object",
 				tool: {
 					name,
 					title: operation.summary,
 					description: [operation.summary, operation.description].filter(Boolean).join("\n\n"),
 					inputSchema: { type: "object", properties, required },
 					outputSchema: outputSchemaOf(operation.responses),
+					...(operation["x-mcp"]?.ui ? { _meta: { ui: { resourceUri: WIDGET_URI } } } : {}),
 					annotations: {
 						title: operation.summary,
 						readOnlyHint: method === "get",
@@ -222,19 +235,56 @@ async function updateNotice(): Promise<string | null> {
 	}
 }
 
+const DECLINED: CallToolResult = { content: [{ type: "text", text: "The user did not confirm the charge, so nothing was started and no credits were spent." }], isError: true };
+
+// The list never varies per caller and follows the API spec, so clients and shared caches may keep it as long as the spec refresh.
+const CACHE_HINTS = {
+	"tools/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"resources/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"resources/read": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"server/discover": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+} as const;
+
 // A remote client has no filesystem to upload from, so it never sees the routes that need one.
 function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: boolean; notice?: string | null }): Server {
 	const api = createApi(creds);
 	const available = async () => new Map([...(await loadEndpoints())].filter(([, endpoint]) => localFiles || !endpoint.localFiles));
-	const server = new Server({ name: "cutpro", title: "CutPro", version: SERVER_VERSION, description: SERVER_DESCRIPTION, websiteUrl: SERVER_WEBSITE, icons: SERVER_ICONS }, { capabilities: { tools: {} }, instructions: notice ?? undefined });
+	const server = new Server(
+		{ name: "cutpro", title: "CutPro", version: SERVER_VERSION, description: SERVER_DESCRIPTION, websiteUrl: SERVER_WEBSITE, icons: SERVER_ICONS },
+		{ capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: {} } }, instructions: notice ?? undefined, cacheHints: CACHE_HINTS },
+	);
 	let noticePending = notice !== null;
 
-	server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [...(await available()).values()].map((endpoint) => endpoint.tool) }));
+	server.setRequestHandler("tools/list", async () => ({ tools: [...(await available()).values()].map((endpoint) => endpoint.tool) }));
 
-	server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
-		const endpoint = (await available()).get(params.name);
-		if (!endpoint) return { content: [{ type: "text", text: `Unknown tool: ${params.name}` }], isError: true };
-		const { path, body } = requestFor(endpoint, params.arguments ?? {});
+	server.setRequestHandler("resources/list", async () => ({
+		resources: [{ uri: WIDGET_URI, name: "cutpro_media", title: "CutPro media", description: "Plays generated images and videos, personas, clips and renders, and follows them until they are ready.", mimeType: WIDGET_MIME, _meta: { ui: WIDGET_UI } }],
+	}));
+
+	server.setRequestHandler("resources/templates/list", async () => ({ resourceTemplates: [] }));
+
+	server.setRequestHandler("resources/read", async (request) => {
+		if (request.params.uri !== WIDGET_URI) throw new ResourceNotFoundError(request.params.uri);
+		return { contents: [{ uri: WIDGET_URI, mimeType: WIDGET_MIME, text: WIDGET_HTML, _meta: { ui: WIDGET_UI } }] };
+	});
+
+	server.setRequestHandler("tools/call", async (request, ctx) => {
+		const endpoint = (await available()).get(request.params.name);
+		if (!endpoint) return { content: [{ type: "text", text: `Unknown tool: ${request.params.name}` }], isError: true };
+		const args = request.params.arguments ?? {};
+
+		// Filled per request on 2026-07-28 and by the handshake on stdio; a stateless 2025 HTTP request has nowhere to ask, so it is never set there.
+		if (endpoint.charges && typeof args.credits === "number" && server.getClientCapabilities()?.elicitation) {
+			const answer = acceptedContent(ctx.mcpReq.inputResponses, "confirm", CONFIRM_SCHEMA);
+			if (!answer && !ctx.mcpReq.inputResponses?.confirm) {
+				return inputRequired({
+					inputRequests: { confirm: inputRequired.elicit({ message: `${endpoint.tool.title ?? endpoint.tool.name}: ${args.credits} CutPro credits will be charged now.`, requestedSchema: CONFIRM_SCHEMA }) },
+				});
+			}
+			if (!answer?.confirm) return DECLINED;
+		}
+
+		const { path, body } = requestFor(endpoint, args);
 		const result = await run(() => api(endpoint.method, path, body), endpoint.tool.outputSchema !== undefined);
 		// Instructions alone are easy to miss, so the first tool result of the session also carries the notice for the model to relay.
 		if (notice && noticePending) {
@@ -263,8 +313,8 @@ function cors(): RequestHandler {
 	return (req, res, next) => {
 		res.header("Access-Control-Allow-Origin", req.header("origin") ?? "*");
 		res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
-		res.header("Access-Control-Allow-Headers", "Authorization, Content-Type, mcp-session-id, mcp-protocol-version");
-		res.header("Access-Control-Expose-Headers", "mcp-session-id, WWW-Authenticate");
+		res.header("Access-Control-Allow-Headers", "*");
+		res.header("Access-Control-Expose-Headers", "Mcp-Session-Id, WWW-Authenticate");
 		if (req.method === "OPTIONS") {
 			res.sendStatus(204);
 			return;
@@ -411,33 +461,22 @@ async function startHttp(port: number): Promise<void> {
 		guard = requireBearerAuth({ verifier: provider, resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(resourceServerUrl) });
 	}
 
-	const mcp: RequestHandler = (req, res) => {
+	// Without OAuth the key travels in a header; either way the factory reads it from the same pass-through auth info.
+	const withKey: RequestHandler = (req, res, next) => {
 		const apiKey = oauth ? authedKey(req) : bearerKey(req);
 		if (!apiKey) {
 			res.status(401).json({ error: "Missing API key" });
 			return;
 		}
-		const server = buildServer({ apiKey, workspaceId: req.header("x-workspace-id") ?? process.env.CUTPRO_WORKSPACE_ID }, { localFiles: false });
-		const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-		res.on("close", () => {
-			void transport.close();
-			void server.close();
-		});
-		server
-			.connect(transport)
-			.then(() => transport.handleRequest(req, res, req.body))
-			.catch((e: unknown) => {
-				if (!res.headersSent) res.status(500).json({ error: e instanceof Error ? e.message : "error" });
-			});
+		if (!oauth) req.auth = { token: apiKey, clientId: "api-key", scopes: [], extra: { apiKey } };
+		next();
 	};
-
-	app.post("/", guard ? [express.json(), guard, mcp] : [express.json(), mcp]);
-	// Stateless: there is no session stream to open or close, and the streamable HTTP spec answers both with 405, not a 404 that reads as a missing endpoint.
-	const methodNotAllowed: RequestHandler = (_req, res) => {
-		res.status(405).set("Allow", "POST").json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null });
-	};
-	app.get("/", guard ? [guard, methodNotAllowed] : methodNotAllowed);
-	app.delete("/", guard ? [guard, methodNotAllowed] : methodNotAllowed);
+	const handler = createMcpHandler(({ authInfo, requestInfo }: McpRequestContext) => {
+		const apiKey = typeof authInfo?.extra?.apiKey === "string" ? authInfo.extra.apiKey : "";
+		return buildServer({ apiKey, workspaceId: requestInfo?.headers.get("x-workspace-id") ?? process.env.CUTPRO_WORKSPACE_ID }, { localFiles: false });
+	});
+	const mcp = toNodeHandler(handler);
+	app.all("/", express.json({ limit: "4mb" }), ...(guard ? [guard] : []), withKey, (req, res) => void mcp(req, res, req.body));
 
 	// Registered last so it also catches the SDK auth routes' own body parsers: otherwise express answers an HTML 400 carrying the SyntaxError stack and logs it.
 	const badBody: ErrorRequestHandler = (err, req, res, next) => {
@@ -461,8 +500,7 @@ async function startStdio(): Promise<void> {
 	}
 	const notice = await updateNotice();
 	if (notice) process.stderr.write(`${notice}\n`);
-	const server = buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, notice });
-	await server.connect(new StdioServerTransport());
+	serveStdio(() => buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, notice }));
 }
 
 if (process.env.MCP_TRANSPORT === "http" || process.env.API_MCP_PORT) {
