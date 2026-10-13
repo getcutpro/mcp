@@ -15,6 +15,7 @@ bun install
 CUTPRO_API_KEY=<your-api-key> bun run dev          # stdio
 MCP_TRANSPORT=http PORT=8787 bun run dev           # Streamable HTTP, key in X-Api-Key
 bun x tsc --noEmit                                 # type check
+bun run format                                     # Prettier
 bun run build                                      # dist/
 bun run src/index.ts readme                        # regenerate the README tool list
 ```

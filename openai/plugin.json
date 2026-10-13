@@ -10,20 +10,7 @@
 	"homepage": "https://cut.pro",
 	"repository": "https://github.com/getcutpro/mcp",
 	"license": "MIT",
-	"keywords": [
-		"ai video",
-		"ai image",
-		"image generation",
-		"video generation",
-		"ai persona",
-		"ugc",
-		"video",
-		"clips",
-		"shorts",
-		"live",
-		"transcription",
-		"social media"
-	],
+	"keywords": ["ai video", "ai image", "image generation", "video generation", "ai persona", "ugc", "video", "clips", "shorts", "live", "transcription", "social media"],
 	"extensions": {
 		"com.openai": {
 			"interface": {
@@ -44,11 +31,7 @@
 				"supportURL": "https://cut.pro/en/help",
 				"privacyPolicyURL": "https://cut.pro/ai-privacy",
 				"termsOfServiceURL": "https://cut.pro/terms",
-				"defaultPrompt": [
-					"Make a 9:16 video of a barista pouring latte art with Veo",
-					"Create an AI persona for my product ads",
-					"Turn this YouTube video into short clips"
-				],
+				"defaultPrompt": ["Make a 9:16 video of a barista pouring latte art with Veo", "Create an AI persona for my product ads", "Turn this YouTube video into short clips"],
 				"brandColor": "#4F46E5",
 				"brandColorDark": "#8B85F5",
 				"composerIcon": "./assets/logo.png",
