@@ -204,7 +204,7 @@ Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELE
 
 <!-- tools:start -->
 
-90 tools and 5 prompts, generated from the live API spec and the server.
+91 tools and 5 prompts, generated from the live API spec and the server.
 
 #### Prompts
 
@@ -363,15 +363,16 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Generations
 
-| Tool                      | What it does                                 | Notes                                               |
-| ------------------------- | -------------------------------------------- | --------------------------------------------------- |
-| `list_generation_models`  | List image and video models and their prices |                                                     |
-| `upload_generation_image` | Upload a reference image                     | local server only                                   |
-| `create_generation`       | Generate an image or a video                 | spends credits, asks first, opens the CutPro player |
-| `list_generations`        | List generations                             | opens the CutPro player                             |
-| `get_generation`          | Get a generation                             | opens the CutPro player                             |
-| `delete_generation`       | Delete a generation                          |                                                     |
-| `download_generation`     | Get the download link of a generation        |                                                     |
+| Tool                      | What it does                                        | Notes                                               |
+| ------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| `list_generation_models`  | List image, video and voice models and their prices |                                                     |
+| `upload_generation_image` | Upload a reference image                            | local server only                                   |
+| `create_generation`       | Generate an image, a video or a voice               | spends credits, asks first, opens the CutPro player |
+| `list_generations`        | List generations                                    | opens the CutPro player                             |
+| `get_generation`          | Get a generation                                    | opens the CutPro player                             |
+| `delete_generation`       | Delete a generation                                 |                                                     |
+| `open_generation_edit`    | Open a generated or persona video to edit or post   |                                                     |
+| `download_generation`     | Get the download link of a generation               |                                                     |
 
 <!-- tools:end -->
 
