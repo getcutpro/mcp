@@ -2,6 +2,11 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.0.3 (2026-11-01)
+
+- The ChatGPT plugin listing (1.2.1) names no third-party model and no price, as the OpenAI directory asks.
+- Generation and prompt rewriting are marked as reaching outside systems (`openWorldHint`).
+
 ## 3.0.2 (2026-11-01)
 
 - The skill shared by every app no longer talks about buying; the server tells the agent how to offer credits and plans only where purchases are allowed.
