@@ -2,6 +2,10 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.0.2 (2026-11-01)
+
+- The skill shared by every app no longer talks about buying; the server tells the agent how to offer credits and plans only where purchases are allowed.
+
 ## 3.0.1 (2026-11-01)
 
 - The ChatGPT plugin package fits the directory limits: a 30-character subtitle in every language and the 5 positive and 3 negative review cases the first review asks for.

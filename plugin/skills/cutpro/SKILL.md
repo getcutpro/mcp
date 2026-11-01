@@ -10,7 +10,7 @@ Every CutPro tool maps to one endpoint of the CutPro API and answers with the AP
 
 ## Spend and publish only after the user agrees
 
-Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `quote_generation` for anything generated, `get_persona_catalog` and `quote_persona_swap` for AI characters, `analyze_video` for clipping.
+Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `quote_generation` for anything generated, `get_persona_catalog` and `quote_persona_swap` for AI characters, `analyze_video` for clipping. When the price is above the balance (`get_balance`), say so before the user agrees, not after.
 
 ## Generate anything with any model
 
@@ -69,21 +69,9 @@ Turns the speech of any video or audio into timed captions, with optional speake
 2. `create_transcription`, then poll `get_transcription` until it is ready.
 3. `get_transcription_cues` gives the timed text as JSON, good for summarizing, quoting or translating it in the chat. `download_transcription` gives an SRT, VTT or TXT file to hand over.
 
-## Credits and plans
-
-Only where `list_credit_offers` is among your tools (some apps do not allow purchases, and there it is missing).
-
-1. `get_balance` before a big job: when the quote is above the balance, say so before the user agrees, not after.
-2. `list_credit_offers` (free) gives the packs and plans at the user's own price, each with a checkout link that opens the payment on cut.pro with that choice already made, in this workspace. Prices are in cents of `currency`: show them as money in the user's format (6990 BRL is R$ 69,90).
-3. For a one-off job, suggest the smallest pack with at least the missing credits. When the user creates often, also show the plan whose `credits_per_month` covers that use, with two or three of its `highlights`, and the annual price when it saves.
-4. Hand over the one link that matches the choice (`checkout_url`, `monthly_checkout_url` or `annual_checkout_url`). The user pays on cut.pro; once they say it is done, call `get_balance` and carry on with the job that was waiting.
-5. When `can_buy` is `false`, only the workspace owner can pay: tell the user to ask them.
-
-Bring this up only when the credits run short or the user asks about plans, prices or credits.
-
 ## When something fails
 
-- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits. When `list_credit_offers` is among your tools, offer the way out right there (see Credits and plans); otherwise hand over `extra.top_up_url`, the cut.pro page for this workspace.
+- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits and hand over `extra.top_up_url`, the cut.pro page for this workspace.
 - `TOO_MANY_RUNNING`: the workspace already has the most generations running at once. Wait for one to finish.
 - `RATE_LIMIT_EXCEEDED`: wait `extra.retry_after` seconds before calling again.
 - `409` codes such as `VIDEO_ALREADY_PROCESSING` or `RENDER_ALREADY_IN_PROGRESS`: the work is already running, so poll it instead of starting it again.
