@@ -2,6 +2,10 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.0.1 (2026-11-01)
+
+- The ChatGPT plugin package fits the directory limits: a 30-character subtitle in every language and the 5 positive and 3 negative review cases the first review asks for.
+
 ## 3.0.0 (2026-11-01)
 
 - Generation of every kind: `list_models` and `list_featured_models` replace `list_generation_models`, and `create_generation` now runs voices, music (Suno, Eleven Music, MiniMax), sound effects, talking avatars, 3D models and image and video tools besides images and videos, with each model's own fields in `options`.

@@ -1,6 +1,6 @@
 {
 	"name": "@cutpro/mcp",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"mcpName": "io.github.getcutpro/cutpro",
 	"description": "CutPro MCP server: create images, videos, music, voices, sound effects, talking avatars and 3D with any AI model, AI characters, AI video clips, social scheduling and transcription",
 	"author": "Lucas Toledo",
