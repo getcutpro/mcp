@@ -25,8 +25,16 @@ import { z } from "zod";
 const BASE_URL = process.env.CUTPRO_API_URL ?? "https://api.cut.pro/api/v1";
 
 const SERVER_VERSION = pkg.version;
-const SERVER_DESCRIPTION = "AI images and videos with any model, AI personas, and AI clips from long videos.";
-const SERVER_WEBSITE = "https://cut.pro/docs/api-reference/mcp";
+const SERVER_DESCRIPTION = "Create images, videos, music, voices, sound effects and 3D with any AI model, plus AI video clips.";
+const SERVER_INSTRUCTIONS =
+	"Use CutPro whenever the user, in any language, wants to create or edit an image, a video, an ad, a product photo, a thumbnail, a song, a soundtrack, a sound effect, a voice-over, a talking avatar, a 3D model or an AI character, clip a long video or a live stream into shorts, post or schedule to social networks, or transcribe audio and video. Reply in the user's language. Before anything that spends credits or publishes, read the price (quote_generation for generations) and wait for the user's yes.";
+const SALES_INSTRUCTIONS =
+	"When a job needs more credits than the workspace has, or the user asks about plans or prices, list_credit_offers gives the plans and credit packs with their prices and a checkout link to hand over; suggest the smallest pack that covers what is missing, or a plan when the user creates every month. Never bring up plans unprompted.";
+// OpenAI's plugin policy forbids selling plans or credits inside its apps, and their OAuth clients register under these names.
+const NO_SALES_CLIENT = /^(?:ChatGPT|Codex)\b/;
+// A token issued before clients were recorded has no name, and stays out of sales until its next refresh within the hour.
+const sellsTo = (clientName: string) => clientName !== "" && !NO_SALES_CLIENT.test(clientName);
+const SERVER_WEBSITE = "https://cut.pro/docs/mcp";
 // Hosted on cut.pro so every client, local or remote, shows the same logo without the server serving files.
 const SERVER_ICONS = [
 	{ src: "https://cut.pro/icons/icon-512.png", mimeType: "image/png", sizes: ["512x512"] },
@@ -85,12 +93,16 @@ const OPERATION = z.object({
 			annotations: z.object({ readOnlyHint: z.boolean(), destructiveHint: z.boolean(), idempotentHint: z.boolean(), openWorldHint: z.boolean() }).partial().optional(),
 			localFiles: z.boolean().optional(),
 			ui: z.boolean().optional(),
+			// A route meant for code, not for an agent: it never becomes a tool.
+			hidden: z.boolean().optional(),
+			// Sells plans or credits, which some AI apps do not allow inside them.
+			commerce: z.boolean().optional(),
 		})
 		.optional(),
 });
-const SPEC = z.object({ paths: z.record(z.string(), z.record(z.string(), z.unknown())) });
+const SPEC = z.object({ paths: z.record(z.string(), z.record(z.string(), z.unknown())), tags: z.array(z.object({ name: z.string(), "x-displayName": z.string().optional() })).optional() });
 
-type Endpoint = { tool: Tool; tag: string; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean; charges: boolean };
+type Endpoint = { tool: Tool; tag: string; method: string; path: string; queryParams: string[]; bodyKeys: string[] | null; localFiles: boolean; commerce: boolean; charges: boolean };
 
 const UI_EXTENSION = "io.modelcontextprotocol/ui";
 const WIDGET_URI = "ui://cutpro/media";
@@ -134,11 +146,13 @@ function outputSchemaOf(responses: z.infer<typeof OPERATION>["responses"]): Tool
 // One tool per operation of the API's own spec, so the MCP cannot drift from the API: a new route, field or description shows up here on the next refresh.
 function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 	const endpoints = new Map<string, Endpoint>();
+	// The reference shows each section under its product name; the README's tool list follows it.
+	const sections = new Map((spec.tags ?? []).map((tag) => [tag.name, tag["x-displayName"] ?? tag.name]));
 	for (const [path, item] of Object.entries(spec.paths)) {
 		for (const [method, raw] of Object.entries(item)) {
 			if (!METHODS.includes(method)) continue;
 			const operation = OPERATION.parse(nullableToJsonSchema(raw));
-			if (!operation.operationId) continue;
+			if (!operation.operationId || operation["x-mcp"]?.hidden) continue;
 			const parameters = operation.parameters ?? [];
 			const body = operation.requestBody?.content["application/json"]?.schema;
 			const properties: Record<string, JsonSchema> = { ...body?.properties };
@@ -150,12 +164,13 @@ function toEndpoints(spec: z.infer<typeof SPEC>): Map<string, Endpoint> {
 
 			const name = operation.operationId.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 			endpoints.set(name, {
-				tag: operation.tags?.[0] ?? "Other",
+				tag: sections.get(operation.tags?.[0] ?? "") ?? operation.tags?.[0] ?? "Other",
 				method: method.toUpperCase(),
 				path,
 				queryParams: parameters.filter((parameter) => parameter.in === "query").map((parameter) => parameter.name),
 				bodyKeys: body ? Object.keys(body.properties ?? {}) : null,
 				localFiles: operation["x-mcp"]?.localFiles ?? false,
+				commerce: operation["x-mcp"]?.commerce ?? false,
 				// A route that takes the agreed `credits` spends them; the user confirms that price in the client itself where it can ask.
 				charges: method === "post" && typeof body?.properties?.credits === "object",
 				tool: {
@@ -312,10 +327,10 @@ const PROMPTS: PromptRecipe[] = [
 		description: "Turn an idea into a video with Veo, Kling, Seedance, Wan or any other model.",
 		arguments: [
 			{ name: "idea", description: "What the video shows", required: true },
-			{ name: "model", description: "A model name, like Veo or Kling; the best value for the price when left out", required: false },
+			{ name: "model", description: "A model name, like Veo or Kling; a featured one when left out", required: false },
 		],
 		text: (args) =>
-			`Generate a vertical (9:16) video with CutPro of: ${args.idea}. ${args.model ? `Use ${args.model}.` : "Pick the balanced preset."} Read the models and prices with list_generation_models, tell me the model, the length and the total in credits, and wait for my yes before create_generation. Then follow it until it is ready and show it.`,
+			`Generate a vertical (9:16) video with CutPro of: ${args.idea}. ${args.model ? `Use ${args.model}, found with list_models.` : "Pick a strong video model from list_featured_models, or the balanced preset."} Get the exact price with quote_generation, tell me the model, the length and the total in credits, and wait for my yes before create_generation with that price and wait set to 60. Follow it with get_generation until it is ready and show it.`,
 	},
 	{
 		name: "product_ad",
@@ -323,15 +338,64 @@ const PROMPTS: PromptRecipe[] = [
 		description: "An ad image of your product, animated into a vertical video ready to post.",
 		arguments: [{ name: "product", description: "The product, described in a few words", required: true }],
 		text: (args) =>
-			`Make an ad with CutPro for: ${args.product}. First generate a striking product image (image generation, references mode if I share a photo of the product), show it, then animate it into a 9:16 video passing its output.image_id. Tell me the price of each step and wait for my yes before each one. When the video is ready, offer to schedule it on my connected accounts.`,
+			`Make an ad with CutPro for: ${args.product}. First generate a striking product image (pass my product photo in image_urls if I share one), show it, then animate it into a 9:16 video passing its output.image_id in image_ids. Quote each step with quote_generation and wait for my yes before each one. When the video is ready, offer to schedule it on my connected accounts.`,
+	},
+	{
+		name: "make_music",
+		title: "Make a song or a soundtrack",
+		description: "A song with lyrics, or an instrumental for a video, with Suno, Eleven Music, MiniMax and more.",
+		arguments: [
+			{ name: "idea", description: "The style, mood or topic, and the lyrics if you have them", required: true },
+			{ name: "instrumental", description: "yes for no vocals", required: false },
+		],
+		text: (args) =>
+			`Make music with CutPro: ${args.idea}.${args.instrumental ? " It must be instrumental, no vocals." : ""} Pick a music model from list_featured_models with kind music, read its parameters to fill the model's own fields in options (lyrics, instrumental switch, style), get the price with quote_generation and wait for my yes. Then create_generation, follow it until it is ready and give me the audio from outputs.`,
+	},
+	{
+		name: "voiceover",
+		title: "Voice-over for a video",
+		description: "A natural voice reading your script, in any language, ready to put in a video.",
+		arguments: [{ name: "script", description: "The text to read", required: true }],
+		text: (args) =>
+			`Make a voice-over with CutPro reading exactly this text: ${args.script}. List the voices of the featured speech models with list_featured_models, suggest two that fit (with their preview_url), get the price with quote_generation once I pick one and wait for my yes. Then create_generation with kind speech, follow it and give me the MP3. Offer to use its output.audio_id in a talking avatar or a video afterwards.`,
+	},
+	{
+		name: "talking_avatar",
+		title: "Make a photo talk",
+		description: "A person in a photo speaking your script with a natural voice, in any language.",
+		arguments: [
+			{ name: "photo", description: "Link of the photo of the person", required: true },
+			{ name: "script", description: "What the person says", required: true },
+		],
+		text: (args) =>
+			`Make a talking avatar with CutPro: the person in ${args.photo} says exactly this: ${args.script}. First make the voice with a featured speech model (suggest two voices that fit, with their preview_url), then pass its output.audio_id in audio_ids and the photo in image_urls to a featured avatar model. Quote each step with quote_generation and wait for my yes before each one, then show me the video.`,
+	},
+	{
+		name: "edit_image",
+		title: "Edit, upscale or clean up an image",
+		description: "Upscale, remove the background, erase objects or change anything in a photo.",
+		arguments: [
+			{ name: "image", description: "Link of the image", required: true },
+			{ name: "change", description: "What to do, like upscale it, remove the background or put the product on a marble table", required: true },
+		],
+		text: (args) =>
+			`Edit this image with CutPro: ${args.image}. What I want: ${args.change}. Pick the right model from list_featured_models (a tool model to upscale or remove the background, an image model with mode edit to change the content), pass the image in image_urls, get the price with quote_generation and wait for my yes. Then create_generation, follow it until it is ready and show the result.`,
+	},
+	{
+		name: "make_3d",
+		title: "Turn an image or an idea into a 3D model",
+		description: "A 3D model (GLB) from a photo or a description, for games, AR or product pages.",
+		arguments: [{ name: "subject", description: "What the model is, or a link to a photo of it", required: true }],
+		text: (args) =>
+			`Make a 3D model with CutPro of: ${args.subject}. Pick a model3d model from list_featured_models (one that takes an image if I gave a photo, passing it in image_urls), get the price with quote_generation and wait for my yes. Then create_generation, follow it until it is ready and give me the file links from outputs.`,
 	},
 	{
 		name: "create_persona",
-		title: "Create an AI persona",
+		title: "Create an AI character",
 		description: "A realistic person that stays the same in every photo and video.",
-		arguments: [{ name: "description", description: "Who the persona is: age, look, style", required: true }],
+		arguments: [{ name: "description", description: "Who the character is: age, look, style", required: true }],
 		text: (args) =>
-			`Create a CutPro AI persona: ${args.description}. Read the traits and prices with get_persona_catalog and offer the ready-made characters from list_persona_presets if one fits. Tell me the price, wait for my yes, create it and follow it until the photo is ready, then ask whether to save it.`,
+			`Create a CutPro AI character (persona): ${args.description}. Read the traits and prices with get_persona_catalog and offer the ready-made characters from list_persona_presets if one fits. Tell me the price, wait for my yes, create it and follow it until the photo is ready, then ask whether to save it.`,
 	},
 	{
 		name: "clip_and_schedule",
@@ -358,20 +422,25 @@ const DECLINED: CallToolResult = { content: [{ type: "text", text: "The user did
 
 // The list never varies per caller and follows the API spec, so clients and shared caches may keep it as long as the spec refresh.
 const CACHE_HINTS = {
-	"tools/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"tools/list": { ttlMs: SPEC_TTL_MS, cacheScope: "private" },
 	"resources/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 	"prompts/list": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
 	"resources/read": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
-	"server/discover": { ttlMs: SPEC_TTL_MS, cacheScope: "public" },
+	"server/discover": { ttlMs: SPEC_TTL_MS, cacheScope: "private" },
 } as const;
 
 // A remote client has no filesystem to upload from, so it never sees the routes that need one.
-function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: boolean; notice?: string | null }): Server {
+function buildServer(creds: Creds, { localFiles, commerce, notice = null }: { localFiles: boolean; commerce: boolean; notice?: string | null }): Server {
 	const api = createApi(creds);
-	const available = async () => new Map([...(await loadEndpoints())].filter(([, endpoint]) => localFiles || !endpoint.localFiles));
+	const available = async () => new Map([...(await loadEndpoints())].filter(([, endpoint]) => (localFiles || !endpoint.localFiles) && (commerce || !endpoint.commerce)));
+	const instructions = commerce ? `${SERVER_INSTRUCTIONS} ${SALES_INSTRUCTIONS}` : SERVER_INSTRUCTIONS;
 	const server = new Server(
 		{ name: "cutpro", title: "CutPro", version: SERVER_VERSION, description: SERVER_DESCRIPTION, websiteUrl: SERVER_WEBSITE, icons: SERVER_ICONS },
-		{ capabilities: { tools: {}, resources: {}, prompts: {}, extensions: { [UI_EXTENSION]: {} } }, instructions: notice ?? undefined, cacheHints: CACHE_HINTS },
+		{
+			capabilities: { tools: {}, resources: {}, prompts: {}, extensions: { [UI_EXTENSION]: {} } },
+			instructions: notice ? `${notice}\n\n${instructions}` : instructions,
+			cacheHints: CACHE_HINTS,
+		},
 	);
 	let noticePending = notice !== null;
 
@@ -383,7 +452,7 @@ function buildServer(creds: Creds, { localFiles, notice = null }: { localFiles: 
 				uri: WIDGET_URI,
 				name: "cutpro_media",
 				title: "CutPro media",
-				description: "Plays generated images and videos, personas, clips and renders, and follows them until they are ready.",
+				description: "Plays generated images, videos, voices and music, hands over 3D models, shows AI characters, clips and renders, and follows them until they are ready.",
 				mimeType: WIDGET_MIME,
 				_meta: { ui: WIDGET_UI },
 			},
@@ -611,12 +680,16 @@ async function startHttp(port: number): Promise<void> {
 			res.status(401).json({ error: "Missing API key" });
 			return;
 		}
-		if (!oauth) req.auth = { token: apiKey, clientId: "api-key", scopes: [], extra: { apiKey } };
+		if (!oauth) req.auth = { token: apiKey, clientId: "api-key", scopes: [], extra: { apiKey, clientName: "api-key" } };
 		next();
 	};
 	const handler = createMcpHandler(({ authInfo, requestInfo }: McpRequestContext) => {
 		const apiKey = typeof authInfo?.extra?.apiKey === "string" ? authInfo.extra.apiKey : "";
-		return buildServer({ apiKey, workspaceId: requestInfo?.headers.get("x-workspace-id") ?? process.env.CUTPRO_WORKSPACE_ID }, { localFiles: false });
+		const clientName = authInfo?.extra?.clientName;
+		return buildServer(
+			{ apiKey, workspaceId: requestInfo?.headers.get("x-workspace-id") ?? process.env.CUTPRO_WORKSPACE_ID },
+			{ localFiles: false, commerce: typeof clientName === "string" && sellsTo(clientName) },
+		);
 	});
 	const mcp = toNodeHandler(handler);
 	app.all("/", express.json({ limit: "1mb" }), ...(guard ? [guard] : []), withKey, (req, res) => void mcp(req, res, req.body));
@@ -647,7 +720,7 @@ async function startStdio(): Promise<void> {
 		? `CutPro MCP ${SERVER_VERSION} is outdated: version ${latest} is available. Tell the user to update: restart the AI app if its config runs "npx -y @cutpro/mcp@latest", or change the command to that.`
 		: null;
 	if (notice) process.stderr.write(`${notice}\n`);
-	serveStdio(() => buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, notice }));
+	serveStdio(() => buildServer({ apiKey, workspaceId: process.env.CUTPRO_WORKSPACE_ID }, { localFiles: true, commerce: true, notice }));
 }
 
 if (process.argv[2] === "readme") {

@@ -1,30 +1,31 @@
 ---
 name: cutpro
-description: Generate AI images and videos with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image and more), create realistic AI personas and swap them into videos, and turn long videos and live streams into short clips with CutPro, then render and publish them. Use when the user wants to generate or animate an image or a video, make an AI person or character, put a persona into a video, clip a YouTube, Twitch, Kick or TikTok video, follow a channel's lives, render or download a clip, post or schedule posts to TikTok, Instagram, YouTube and other connected accounts, connect a social account, or transcribe audio and video into captions.
+description: Create anything with AI through CutPro, in any language: images, videos, voice-overs, songs, soundtracks, sound effects, talking avatars and 3D models with any top model (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image, Suno, ElevenLabs, MiniMax, Rodin), plus upscaling, background removal and editing of images and videos; consistent AI characters swapped into any video; clips of long videos and live streams; scheduled posts; and transcription. Use when the user wants to make, animate, edit, upscale or restyle an image or a video, an ad, a product photo, a UGC video, a thumbnail, a song, a jingle, a sound effect, a voice-over or narration, a talking avatar, a 3D asset, or an AI person; clip a YouTube, Twitch, Kick, TikTok or podcast video into shorts; follow a channel's lives; render, download or post to TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn, Pinterest or Bluesky; connect a social account; or turn audio and video into captions (SRT, VTT, text).
 license: MIT
 ---
 
 # CutPro
 
-Every CutPro tool maps to one endpoint of the CutPro API and answers with the API's own JSON. In clients that show MCP Apps, generations, personas, clips and renders open in a CutPro player that follows the job until it is ready, so there is no need to poll or paste links when the player is on screen. Errors come back as `{ "code": "...", "extra": { ... } }`: switch on `code`, never on wording. Talk to the user in their language.
+Every CutPro tool maps to one endpoint of the CutPro API and answers with the API's own JSON. In clients that show MCP Apps, generations, AI characters, clips and renders open in a CutPro player that follows the job until it is ready, so there is no need to poll or paste links when the player is on screen. Errors come back as `{ "code": "...", "extra": { ... } }`: switch on `code`, never on wording. Talk to the user in their language.
 
 ## Spend and publish only after the user agrees
 
-Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `list_generation_models` for images and videos, `get_persona_catalog` and `quote_persona_swap` for personas, `analyze_video` for clipping.
+Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `quote_generation` for anything generated, `get_persona_catalog` and `quote_persona_swap` for AI characters, `analyze_video` for clipping.
 
-## Generate images and videos with any model
+## Generate anything with any model
 
-1. `list_generation_models` lists every image and video model available right now, with the modes, resolutions, durations, aspect ratios and price of each. When the user names no model, pick from `presets` (`fast`, `balanced`, `best`); when they name one ("make it with Veo", "use Kling"), match it by `name`.
-2. Work out the total: the model's `credits` for the mode and resolution, times `seconds` for a video (`silent_credits` when `audio` is `false`). Tell the user the model, what will be made and the total, and wait for a yes.
-3. `create_generation` with `kind`, `model`, `mode`, `prompt`, `aspect_ratio` (`9:16` for TikTok, Reels and Shorts), `seconds` for a video, and `credits` set to that total. `PRICE_CHANGED` charges nothing and brings the new total in `extra.credits`: tell the user and ask again.
-4. Poll `get_generation` every 10 seconds until `status` is `ready` or `failed`. `expected_seconds` says how long the model usually takes. A failed generation gives its credits back on its own. A ready video has an `edit_id`, so it can be posted or scheduled right away (see Publish and schedule).
-5. Show `output.url`. `download_generation` gives the full-quality file, but once taken the credits can no longer be asked back, so only call it when the user wants the file.
+1. Pick the model. `list_featured_models` lists a handful of strong models of every kind; `list_models` is the full catalog, narrowed with `kind` (`image`, `video`, `speech`, `music`, `audio`, `avatar`, `model3d`, `tool`, `videoedit`) and `q`. When the user names a model ("with Veo", "use Suno"), match it by `name` or `id`. For an image, a video or a voice with no model named, `presets` (`fast`, `balanced`, `best`) picks one: send `kind` and `preset` instead of `model`.
+2. Build the request. The shared fields are `prompt`, `seconds`, `aspect_ratio` (`9:16` for TikTok, Reels and Shorts), `voice`, `seed`, and the files: `image_ids` or `image_urls`, `audio_ids` or `audio_urls`, `video_id`. A model's own fields (a song's lyrics or instrumental switch, a 3D model's texture, an image's quality) go in `options`, named as in its `parameters`.
+3. `quote_generation` with that request gives the exact total in credits and the `warnings` (fields the model does not take). `INPUT_INVALID` lists in `extra.missing` the required fields still to send in `options`. Tell the user the model, what will be made and the total, and wait for a yes.
+4. `create_generation` with the same request, `credits` set to that total and `wait: 60`. `PRICE_CHANGED` charges nothing and brings the new total in `extra.credits`: tell the user and ask again.
+5. While `status` is `processing`, call `get_generation` with `wait: 60`. A failed generation gives its credits back on its own. A ready video has an `edit_id` once opened (`open_generation_edit`), so it can be posted or scheduled (see Publish and schedule).
+6. Show the result. `outputs` lists every file with its `kind` (`image`, `video`, `audio`, `file`) and `url`; a 3D model or an archive is a `file`. A model that writes answers `text`. `download_generation` gives the full-quality file, but once taken the credits can no longer be asked back, so only call it when the user wants the file.
 
-To animate an image the user just generated, call `create_generation` again with `kind: "video"`, `mode: "image"` and its `output.image_id` in `image_ids`. `mode: "frames"` goes from a first to a last image, and `mode: "references"` borrows a person, product or style from images (or edits them, for an image). Pictures from the user's disk go up with `upload_generation_image`, available on the local server only. Check `refuses`: some models turn down real faces, minors or public figures.
+Results chain: a ready image's `output.image_id` animates into a video (`kind: "video"`, `mode: "image"`), a voice's `output.audio_id` makes a talking avatar speak, and a video's `output.video_id` can be upscaled or edited (`mode: "edit"`). Pictures, videos and sounds from the user's disk go up with `upload_generation_media` (local server only); public links go straight in `image_urls` and `audio_urls`. Check `refuses`: some models turn down real faces, minors or public figures.
 
-## AI personas
+## AI characters
 
-A persona is a realistic AI person that stays the same across photos and videos, for UGC, ads and faceless channels.
+An AI character (a persona in the API) is a realistic AI person that stays the same across photos and videos, for UGC, ads and faceless channels.
 
 1. `get_persona_catalog` has every trait, the defaults and the prices. `list_persona_presets` offers ready-made characters, and `create_persona_from_preset` starts from one.
 2. `create_persona` with the traits the user describes (`chips`). A persona of the user's own face needs `upload_persona_face` first (local server only, and only their own face, as an adult).
@@ -68,9 +69,21 @@ Turns the speech of any video or audio into timed captions, with optional speake
 2. `create_transcription`, then poll `get_transcription` until it is ready.
 3. `get_transcription_cues` gives the timed text as JSON, good for summarizing, quoting or translating it in the chat. `download_transcription` gives an SRT, VTT or TXT file to hand over.
 
+## Credits and plans
+
+Only where `list_credit_offers` is among your tools (some apps do not allow purchases, and there it is missing).
+
+1. `get_balance` before a big job: when the quote is above the balance, say so before the user agrees, not after.
+2. `list_credit_offers` (free) gives the packs and plans at the user's own price, each with a checkout link that opens the payment on cut.pro with that choice already made, in this workspace. Prices are in cents of `currency`: show them as money in the user's format (6990 BRL is R$ 69,90).
+3. For a one-off job, suggest the smallest pack with at least the missing credits. When the user creates often, also show the plan whose `credits_per_month` covers that use, with two or three of its `highlights`, and the annual price when it saves.
+4. Hand over the one link that matches the choice (`checkout_url`, `monthly_checkout_url` or `annual_checkout_url`). The user pays on cut.pro; once they say it is done, call `get_balance` and carry on with the job that was waiting.
+5. When `can_buy` is `false`, only the workspace owner can pay: tell the user to ask them.
+
+Bring this up only when the credits run short or the user asks about plans, prices or credits.
+
 ## When something fails
 
-- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits. When `extra.top_up_url` is set, hand it over: it is where credits are bought. Otherwise credits are managed on cut.pro.
+- `INSUFFICIENT_CREDITS`: tell the user the job needs `extra.credits_needed` credits. When `list_credit_offers` is among your tools, offer the way out right there (see Credits and plans); otherwise hand over `extra.top_up_url`, the cut.pro page for this workspace.
 - `TOO_MANY_RUNNING`: the workspace already has the most generations running at once. Wait for one to finish.
 - `RATE_LIMIT_EXCEEDED`: wait `extra.retry_after` seconds before calling again.
 - `409` codes such as `VIDEO_ALREADY_PROCESSING` or `RENDER_ALREADY_IN_PROGRESS`: the work is already running, so poll it instead of starting it again.

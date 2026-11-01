@@ -9,20 +9,30 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
 [![Smithery](https://img.shields.io/badge/Smithery-cutpro%2Fmcp-7C3AED?style=flat-square)](https://smithery.ai/servers/cutpro/mcp)
 
-A Model Context Protocol (MCP) server for AI images, videos, personas and clips. It exposes the full [CutPro API](https://cut.pro/docs/api-reference) as tools, so an LLM can:
+A Model Context Protocol (MCP) server for AI generation of every kind, AI characters and clips. It exposes the full [CutPro API](https://cut.pro/docs/reference) as tools, so an LLM can:
 
-- **Generate images and videos with any top model**: Veo, Kling, Seedance, Wan, MiniMax, Nano Banana, GPT Image, Seedream and more, from a prompt or from reference images, with each model's live price.
-- **Create AI personas**: realistic people that stay consistent across photos and videos, then swap them into any video while scene, camera, motion and sound stay.
+- **Generate with any top AI model**: images and videos (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), voices (ElevenLabs, Gemini), music (Suno, Eleven Music, MiniMax), sound effects, talking avatars and 3D models (Rodin, Hunyuan3D, TRELLIS), plus image and video tools (upscale, background removal, editing), from a prompt, images, a video or a sound, with each model's exact price before anything runs.
+- **Create AI characters**: realistic people that stay consistent across photos and videos, then swap them into any video while scene, camera, motion and sound stay.
 - **Clip long videos and live streams**: find the best moments and render the final MP4.
 - **Post and schedule**: publish any clip, generated video or persona video to TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn, Pinterest and Bluesky, now or at a set time.
 - **Transcribe**: any audio or video into timed captions (SRT, VTT, text or JSON).
 
+Ask in any language. Some things people do with it:
+
+- "Make a 9:16 ad of my sneakers with Veo and schedule it on TikTok for Friday 6 pm"
+- "Create an upbeat instrumental for my YouTube intro"
+- "Make this photo of me say the script below in Spanish"
+- "Upscale this product photo and remove the background"
+- "Turn this photo of my lamp into a 3D model for my store"
+- "Clip yesterday's podcast into 5 shorts with captions"
+- "Faça uma narração em português deste roteiro" / "Haz un video de una cafetería al amanecer"
+
 ### Key features
 
-- **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: image and video generation, personas, workspace, balance, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections.
+- **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: the model catalog and generation of every kind, AI characters, workspace, credits, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections. Chat completions and embeddings stay out: they are for code, and an AI client is already a language model.
 - **Runs everywhere**. stdio for local clients (Claude Code, Cursor, Claude Desktop, Windsurf, VS Code, Cline, Zed) and a hosted Streamable HTTP endpoint with OAuth for ChatGPT and Claude.ai.
 - **Latest protocol**. Speaks MCP [2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) (stateless, `server/discover`, cacheable lists, multi round-trip requests) and every earlier revision, on the same endpoint.
-- **Results you can watch**. Clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) show generated images and videos, personas, clips and renders as an inline player that follows a job until it is ready, with buttons to open it in CutPro, animate an image or schedule a post.
+- **Results you can watch**. Clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) show generated images, videos, voices and music, 3D files, AI characters, clips and renders as an inline player that follows a job until it is ready, with buttons to open it in CutPro, animate an image, use a voice in a video or schedule a post.
 - **Asks before it spends**. On clients that support elicitation, every call that charges credits shows the price and waits for the user's confirmation before anything is charged.
 
 ## Getting started
@@ -190,12 +200,12 @@ In OAuth mode the user signs in on cut.pro and approves the app there; cut.pro c
 
 ## Tools
 
-The tools are built from the API's own OpenAPI spec (`/api/v1/openapi.json`), so they always match the [API reference](https://cut.pro/docs/api-reference): one tool per endpoint, named after its `operationId` in snake case (`analyzeVideo` is `analyze_video`, `createSubmission` is `create_submission`), with the endpoint's own parameters, descriptions and responses. A new endpoint becomes a tool within ten minutes of reaching the API, with no new release of this package.
+The tools are built from the API's own OpenAPI spec (`/api/v1/openapi.json`), so they always match the [API reference](https://cut.pro/docs/reference): one tool per endpoint, named after its `operationId` in snake case (`analyzeVideo` is `analyze_video`, `createSubmission` is `create_submission`), with the endpoint's own parameters, descriptions and responses. A new endpoint becomes a tool within ten minutes of reaching the API, with no new release of this package.
 
 The usual flows:
 
-- **Image or video**: `list_generation_models`, `create_generation` with the agreed price, `get_generation` until it is ready. Pass a ready image's `output.image_id` to animate it.
-- **Persona**: `get_persona_catalog`, `create_persona`, `get_persona` until its photo is ready, `save_persona`, then `quote_persona_swap` and `create_persona_video` to put it in a video.
+- **Anything generated**: `list_featured_models` (or `list_models` for the full catalog), `quote_generation` for the exact price, `create_generation` with that price and `wait`, then `get_generation` until it is ready. A model's own fields go in `options`, named as in its `parameters`. Pass a ready image's `output.image_id` to animate it, or a voice's `output.audio_id` to a talking avatar.
+- **AI character**: `get_persona_catalog`, `create_persona`, `get_persona` until its photo is ready, `save_persona`, then `quote_persona_swap` and `create_persona_video` to put it in a video.
 - **Clips**: `analyze_video`, `create_submission`, `get_submission` until it completes, `list_clips`, `render_clip`, `get_render` and `download_render`.
 
 Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELETE` are destructive, and a route declares more in its `x-mcp` extension (spending credits, publishing to a social network, reaching an arbitrary public URL). Routes that need a file uploaded from disk are listed only by the local (stdio) server, since a chat client cannot send bytes.
@@ -204,34 +214,40 @@ Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELE
 
 <!-- tools:start -->
 
-94 tools and 5 prompts, generated from the live API spec and the server.
+99 tools and 10 prompts, generated from the live API spec and the server.
 
 #### Prompts
 
 Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
-| Prompt              | What it does                                                                 |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `generate_video`    | Turn an idea into a video with Veo, Kling, Seedance, Wan or any other model. |
-| `product_ad`        | An ad image of your product, animated into a vertical video ready to post.   |
-| `create_persona`    | A realistic person that stays the same in every photo and video.             |
-| `clip_and_schedule` | The best moments of a long video, rendered and scheduled one per day.        |
-| `transcribe`        | Timed captions of a video or audio, plus a short summary.                    |
+| Prompt              | What it does                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `generate_video`    | Turn an idea into a video with Veo, Kling, Seedance, Wan or any other model.                   |
+| `product_ad`        | An ad image of your product, animated into a vertical video ready to post.                     |
+| `make_music`        | A song with lyrics, or an instrumental for a video, with Suno, Eleven Music, MiniMax and more. |
+| `voiceover`         | A natural voice reading your script, in any language, ready to put in a video.                 |
+| `talking_avatar`    | A person in a photo speaking your script with a natural voice, in any language.                |
+| `edit_image`        | Upscale, remove the background, erase objects or change anything in a photo.                   |
+| `make_3d`           | A 3D model (GLB) from a photo or a description, for games, AR or product pages.                |
+| `create_persona`    | A realistic person that stays the same in every photo and video.                               |
+| `clip_and_schedule` | The best moments of a long video, rendered and scheduled one per day.                          |
+| `transcribe`        | Timed captions of a video or audio, plus a short summary.                                      |
 
-#### Workspace
+#### Account: workspace
 
 | Tool            | What it does          | Notes |
 | --------------- | --------------------- | ----- |
 | `get_workspace` | Get current workspace |       |
 
-#### Balance
+#### Account: credits
 
-| Tool                  | What it does       | Notes |
-| --------------------- | ------------------ | ----- |
-| `get_balance`         | Get balance        |       |
-| `get_balance_history` | Get credit history |       |
+| Tool                  | What it does                | Notes |
+| --------------------- | --------------------------- | ----- |
+| `get_balance`         | Get balance                 |       |
+| `get_balance_history` | Get credit history          |       |
+| `list_credit_offers`  | List plans and credit packs |       |
 
-#### Videos
+#### Clipping: source videos
 
 | Tool                              | What it does                | Notes             |
 | --------------------------------- | --------------------------- | ----------------- |
@@ -242,7 +258,7 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `list_videos`                     | List videos                 |                   |
 | `delete_video`                    | Delete a video              |                   |
 
-#### Submissions
+#### Clipping: clip a video
 
 | Tool                | What it does                | Notes |
 | ------------------- | --------------------------- | ----- |
@@ -253,7 +269,7 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `delete_submission` | Delete submission           |       |
 | `retry_submission`  | Retry a failed submission   |       |
 
-#### Clips
+#### Clipping: clips
 
 | Tool                      | What it does               | Notes                   |
 | ------------------------- | -------------------------- | ----------------------- |
@@ -261,31 +277,9 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `list_clips`              | List generated clips       | opens the CutPro player |
 | `delete_clip`             | Delete a clip              |                         |
 | `download_clip_subtitles` | Download a clip's captions |                         |
+| `render_clip`             | Render a clip              | opens the CutPro player |
 
-#### Renders
-
-| Tool                    | What it does              | Notes                   |
-| ----------------------- | ------------------------- | ----------------------- |
-| `render_clip`           | Render a clip             | opens the CutPro player |
-| `render_broadcast_clip` | Render a broadcast clip   |                         |
-| `get_render_limits`     | Get render quota          |                         |
-| `create_render`         | Render an edit            |                         |
-| `list_renders`          | List renders              |                         |
-| `create_bulk_download`  | Start a bulk download     |                         |
-| `get_bulk_download`     | Get bulk download status  |                         |
-| `get_render`            | Get render status         | opens the CutPro player |
-| `delete_render`         | Cancel or delete a render |                         |
-| `download_render`       | Get render download URL   | opens the CutPro player |
-
-#### Connections
-
-| Tool                  | What it does                       | Notes |
-| --------------------- | ---------------------------------- | ----- |
-| `list_connections`    | List connections                   |       |
-| `get_connection_link` | Get the link to connect an account |       |
-| `get_connection`      | Get a connection                   |       |
-
-#### Monitoring
+#### Live clipping: monitored channels
 
 | Tool                       | What it does                      | Notes |
 | -------------------------- | --------------------------------- | ----- |
@@ -299,8 +293,36 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `list_broadcasts`          | List broadcasts of a live monitor |       |
 | `list_broadcast_clips`     | List clips of a broadcast         |       |
 | `apply_broadcast_template` | Apply template to broadcast clips |       |
+| `render_broadcast_clip`    | Render a broadcast clip           |       |
 
-#### Posts
+#### Editing: templates
+
+| Tool             | What it does   | Notes |
+| ---------------- | -------------- | ----- |
+| `list_templates` | List templates |       |
+
+#### Editing: export to MP4
+
+| Tool                   | What it does              | Notes                   |
+| ---------------------- | ------------------------- | ----------------------- |
+| `get_render_limits`    | Get render quota          |                         |
+| `create_render`        | Render an edit            |                         |
+| `list_renders`         | List renders              |                         |
+| `create_bulk_download` | Start a bulk download     |                         |
+| `get_bulk_download`    | Get bulk download status  |                         |
+| `get_render`           | Get render status         | opens the CutPro player |
+| `delete_render`        | Cancel or delete a render |                         |
+| `download_render`      | Get render download URL   | opens the CutPro player |
+
+#### Posting: connected accounts
+
+| Tool                  | What it does                       | Notes |
+| --------------------- | ---------------------------------- | ----- |
+| `list_connections`    | List connections                   |       |
+| `get_connection_link` | Get the link to connect an account |       |
+| `get_connection`      | Get a connection                   |       |
+
+#### Posting: social media posts
 
 | Tool               | What it does        | Notes |
 | ------------------ | ------------------- | ----- |
@@ -313,13 +335,7 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `retry_post_item`  | Retry a failed item |       |
 | `delete_post_item` | Delete a post item  |       |
 
-#### Templates
-
-| Tool             | What it does   | Notes |
-| ---------------- | -------------- | ----- |
-| `list_templates` | List templates |       |
-
-#### Transcriptions
+#### Transcription
 
 | Tool                          | What it does                               | Notes             |
 | ----------------------------- | ------------------------------------------ | ----------------- |
@@ -331,7 +347,7 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `get_transcription_cues`      | Get the transcript as JSON                 |                   |
 | `download_transcription`      | Download the transcript as a subtitle file |                   |
 
-#### Personas
+#### AI characters
 
 | Tool                             | What it does                                 | Notes                                               |
 | -------------------------------- | -------------------------------------------- | --------------------------------------------------- |
@@ -361,27 +377,36 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `list_persona_shots`             | List a persona's photos                      |                                                     |
 | `get_persona_shot`               | Get a persona photo                          |                                                     |
 
-#### Generations
+#### Generate with AI: models
 
-| Tool                        | What it does                                        | Notes                                               |
-| --------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| `list_generation_models`    | List image, video and voice models and their prices |                                                     |
-| `upload_generation_image`   | Upload a reference image                            | local server only                                   |
-| `create_generation`         | Generate an image, a video or a voice               | spends credits, asks first, opens the CutPro player |
-| `list_generations`          | List generations                                    | opens the CutPro player                             |
-| `get_generation`            | Get a generation                                    | opens the CutPro player                             |
-| `delete_generation`         | Delete a generation                                 |                                                     |
-| `open_generation_edit`      | Open a generated or persona video to edit or post   |                                                     |
-| `improve_generation_prompt` | Rewrite a short request in more detail              |                                                     |
-| `rate_generation`           | Rate a generation                                   |                                                     |
-| `request_generation_refund` | Ask for the credits of a generation back            |                                                     |
-| `download_generation`       | Get the download link of a generation               |                                                     |
+| Tool                   | What it does                        | Notes |
+| ---------------------- | ----------------------------------- | ----- |
+| `list_models`          | List every AI model                 |       |
+| `list_featured_models` | List the models worth starting with |       |
+
+#### Generate with AI: images, videos, sound and 3D
+
+| Tool                            | What it does                                      | Notes                                               |
+| ------------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| `upload_generation_image`       | Upload a reference image                          | local server only                                   |
+| `upload_generation_media`       | Upload an image, video or sound to generate from  | local server only                                   |
+| `quote_generation`              | Price a generation without generating             |                                                     |
+| `create_generation`             | Generate an image, a video or a voice             | spends credits, asks first, opens the CutPro player |
+| `list_generations`              | List generations                                  | opens the CutPro player                             |
+| `get_generation_webhook_secret` | Get the secret that signs generation webhooks     |                                                     |
+| `get_generation`                | Get a generation                                  | opens the CutPro player                             |
+| `delete_generation`             | Delete a generation                               |                                                     |
+| `open_generation_edit`          | Open a generated or persona video to edit or post |                                                     |
+| `improve_generation_prompt`     | Rewrite a short request in more detail            |                                                     |
+| `rate_generation`               | Rate a generation                                 |                                                     |
+| `request_generation_refund`     | Ask for the credits of a generation back          |                                                     |
+| `download_generation`           | Get the download link of a generation             |                                                     |
 
 <!-- tools:end -->
 
 ## Links
 
-- Docs: [cut.pro/docs/api-reference/mcp](https://cut.pro/docs/api-reference/mcp)
+- Docs: [cut.pro/docs/mcp](https://cut.pro/docs/mcp)
 - npm: [@cutpro/mcp](https://www.npmjs.com/package/@cutpro/mcp)
 - MCP Registry: `io.github.getcutpro/cutpro`
 - Releases: [github.com/getcutpro/mcp/releases](https://github.com/getcutpro/mcp/releases) · [CHANGELOG.md](CHANGELOG.md)

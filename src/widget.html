@@ -104,6 +104,17 @@
 				background: var(--border);
 				overflow: hidden;
 			}
+			.text {
+				white-space: pre-wrap;
+				font-size: 13px;
+				line-height: 1.45;
+				max-height: 220px;
+				overflow: auto;
+			}
+			audio.media {
+				height: 54px;
+				aspect-ratio: auto;
+			}
 			.bar > i {
 				display: block;
 				height: 100%;
@@ -125,6 +136,8 @@
 					animate: "Animate",
 					schedule: "Schedule post",
 					useInVideo: "Put in a video",
+					useSound: "Use in a video",
+					file: "Download",
 					generating: "Generating",
 					rendering: "Rendering",
 					failed: "Failed",
@@ -138,6 +151,8 @@
 					animate: "Animar",
 					schedule: "Agendar post",
 					useInVideo: "Colocar num vídeo",
+					useSound: "Usar num vídeo",
+					file: "Baixar",
 					generating: "Gerando",
 					rendering: "Renderizando",
 					failed: "Falhou",
@@ -151,6 +166,8 @@
 					animate: "Animar",
 					schedule: "Programar publicación",
 					useInVideo: "Poner en un video",
+					useSound: "Usar en un video",
+					file: "Descargar",
 					generating: "Generando",
 					rendering: "Renderizando",
 					failed: "Falló",
@@ -249,35 +266,48 @@
 				return node;
 			}
 
-			function card(media, title, meta, actions, error) {
+			function card(media, title, meta, actions, error, text) {
 				return element("div", { class: "card" }, [
 					media,
 					element("div", { class: "body" }, [
 						title ? element("div", { class: "title", text: title }) : null,
 						meta ? element("div", { class: "meta", text: meta }) : null,
+						text ? element("div", { class: "text", text }) : null,
 						error ? element("div", { class: "meta error", text: `${t.failed}: ${error}` }) : null,
 					]),
 					actions?.length ? element("div", { class: "actions" }, actions) : null,
 				]);
 			}
 
+			// A generation can answer a video, an image, a sound, several files (a 3D model and its textures) or only text; the first playable one shows, the rest are handed over.
+			function generationMedia(generation) {
+				const outputs = generation.outputs ?? [];
+				const first = outputs.find((output) => output.kind !== "file");
+				if (first?.kind === "audio") return element("audio", { class: "media", src: first.url, controls: true, preload: "metadata" });
+				if (first) return mediaOf(first.url, generation.output?.thumbnail_url, first.kind === "video");
+				if (outputs.length || !generation.output) return null;
+				if (["speech", "music", "audio"].includes(generation.kind)) return element("audio", { class: "media", src: generation.output.url, controls: true, preload: "metadata" });
+				return mediaOf(generation.output.url, generation.output.thumbnail_url, ["video", "avatar", "videoedit"].includes(generation.kind));
+			}
+
 			function generationCard(generation) {
-				const ready = generation.status === "ready" && generation.output;
-				const isVideo = generation.kind === "video";
-				const meta = [generation.model_name, generation.seconds ? `${generation.seconds} s` : null, generation.aspect_ratio, `${generation.credits_charged} ${t.credits}`].filter(Boolean).join(" · ");
+				const ready = generation.status === "ready" && (generation.output || generation.outputs?.length || generation.text);
+				const isVideo = ["video", "avatar", "videoedit"].includes(generation.kind);
+				const meta = [generation.model_name || generation.model, generation.seconds ? `${generation.seconds} s` : null, generation.aspect_ratio, `${generation.credits_charged} ${t.credits}`]
+					.filter(Boolean)
+					.join(" · ");
 				const actions = [];
 				if (ready) {
 					actions.push(button(t.open, () => openLink(generation.edit_id ? `${SITE}/studio/editor/${generation.edit_id}` : `${SITE}/studio/generations`), true));
-					if (!isVideo && generation.output.image_id)
-						actions.push(button(t.animate, () => say(`Animate the image of CutPro generation ${generation.id} (output.image_id ${generation.output.image_id}) into a video.`)));
+					const image = generation.output?.image_id;
+					if (image) actions.push(button(t.animate, () => say(`Animate the image of CutPro generation ${generation.id} (output.image_id ${image}) into a video.`)));
+					const sound = generation.output?.audio_id;
+					if (sound) actions.push(button(t.useSound, () => say(`Use the sound of CutPro generation ${generation.id} (output.audio_id ${sound}) in a talking avatar or a video.`)));
 					if (isVideo && generation.edit_id) actions.push(button(t.schedule, () => say(`Schedule a post with the video of CutPro generation ${generation.id} (edit_id ${generation.edit_id}).`)));
+					for (const file of (generation.outputs ?? []).filter((output) => output.kind === "file")) actions.push(button(`${t.file} ${file.file_name ?? ""}`.trim(), () => openLink(file.url)));
 				}
-				const media = ready
-					? mediaOf(generation.output.url, generation.output.thumbnail_url, isVideo)
-					: generation.status === "processing"
-						? waiting(t.generating, generation.expected_seconds, generation.created_at)
-						: null;
-				return card(media, generation.prompt, meta, actions, generation.status === "failed" ? generation.error_code : null);
+				const media = ready ? generationMedia(generation) : generation.status === "processing" ? waiting(t.generating, generation.expected_seconds, generation.created_at) : null;
+				return card(media, generation.prompt, meta, actions, generation.status === "failed" ? generation.error_code : null, ready ? generation.text : null);
 			}
 
 			function personaCard(persona) {

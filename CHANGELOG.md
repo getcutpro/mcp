@@ -1,6 +1,17 @@
 # Changelog
 
-Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/api-reference) and change without a release: a new endpoint becomes a tool within ten minutes.
+Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
+
+## 3.0.0 (2026-11-01)
+
+- Generation of every kind: `list_models` and `list_featured_models` replace `list_generation_models`, and `create_generation` now runs voices, music (Suno, Eleven Music, MiniMax), sound effects, talking avatars, 3D models and image and video tools besides images and videos, with each model's own fields in `options`.
+- `quote_generation` gives the exact total before anything runs and is marked read-only, so clients never ask to confirm it.
+- The player plays voices and music, hands over 3D files and shows what a model wrote.
+- New prompts: make music, voice-over, talking avatar, image edit and 3D model.
+- `list_credit_offers` lists the plans and credit packs at the user's own price, each with a cut.pro checkout link already set to that choice and workspace, so the agent can offer a way out when the credits run short. Apps that do not allow purchases inside them never see it.
+- The server now sends instructions to every client: when to use CutPro, in any language, replying in the user's language and reading the price before spending.
+- Chat completions and embeddings are left out of the tools: they are for code, and they spend by the token with no price to confirm first.
+- The README groups tools by product, as the API reference does.
 
 ## 2.4.0 (2026-10-13)
 

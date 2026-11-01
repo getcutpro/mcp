@@ -75,7 +75,7 @@ function token(): string {
 }
 
 type CodeEntry = { clientId: string; redirectUri: string; codeChallenge: string; scopes: string[]; apiKey: string; expiresAt: number };
-type TokenEntry = { clientId: string; scopes: string[]; apiKey: string; expiresAt: number };
+type TokenEntry = { clientId: string; clientName?: string; scopes: string[]; apiKey: string; expiresAt: number };
 type Pending = { clientId: string; clientName: string; redirectUri: string; codeChallenge: string; scopes: string[]; state?: string; expiresAt: number };
 
 export class CutproOAuthProvider implements OAuthServerProvider {
@@ -178,7 +178,7 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 		if (!raw) throw new InvalidGrantError("unknown or used grant");
 		const entry: CodeEntry = JSON.parse(raw);
 		if (entry.clientId !== client.client_id || entry.expiresAt < Date.now()) throw new InvalidGrantError("grant does not belong to this client");
-		return this.issueTokens(entry.clientId, entry.scopes, entry.apiKey);
+		return this.issueTokens(entry.clientId, client.client_name ?? "", entry.scopes, entry.apiKey);
 	}
 
 	async exchangeRefreshToken(client: OAuthClientInformationFull, refreshToken: string, scopes?: string[]): Promise<OAuthTokens> {
@@ -188,7 +188,7 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 		if (entry.clientId !== client.client_id) throw new InvalidGrantError("grant does not belong to this client");
 		// A key revoked on cut.pro ends the connection here, so the client asks the user to connect again instead of failing on every call.
 		if ((await this.keyStatus(entry.apiKey)) === 401) throw new InvalidGrantError("access was revoked");
-		return this.issueTokens(entry.clientId, scopes && scopes.length ? scopes : entry.scopes, entry.apiKey);
+		return this.issueTokens(entry.clientId, client.client_name ?? "", scopes && scopes.length ? scopes : entry.scopes, entry.apiKey);
 	}
 
 	async verifyAccessToken(accessToken: string): Promise<AuthInfo> {
@@ -196,7 +196,7 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 		if (!raw) throw new InvalidTokenError("unknown token");
 		const entry: TokenEntry = JSON.parse(raw);
 		if (entry.expiresAt < Date.now()) throw new InvalidTokenError("token expired");
-		return { token: accessToken, clientId: entry.clientId, scopes: entry.scopes, expiresAt: Math.floor(entry.expiresAt / 1000), extra: { apiKey: entry.apiKey } };
+		return { token: accessToken, clientId: entry.clientId, scopes: entry.scopes, expiresAt: Math.floor(entry.expiresAt / 1000), extra: { apiKey: entry.apiKey, clientName: entry.clientName ?? "" } };
 	}
 
 	async revokeToken(_client: OAuthClientInformationFull, request: OAuthTokenRevocationRequest): Promise<void> {
@@ -204,11 +204,11 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 		await this.kv.del(`rt:${request.token}`);
 	}
 
-	private async issueTokens(clientId: string, scopes: string[], apiKey: string): Promise<OAuthTokens> {
+	private async issueTokens(clientId: string, clientName: string, scopes: string[], apiKey: string): Promise<OAuthTokens> {
 		const access = token();
 		const refresh = token();
-		const accessEntry: TokenEntry = { clientId, scopes, apiKey, expiresAt: Date.now() + ACCESS_TTL_S * 1000 };
-		const refreshEntry: TokenEntry = { clientId, scopes, apiKey, expiresAt: Date.now() + REFRESH_TTL_S * 1000 };
+		const accessEntry: TokenEntry = { clientId, clientName, scopes, apiKey, expiresAt: Date.now() + ACCESS_TTL_S * 1000 };
+		const refreshEntry: TokenEntry = { clientId, clientName, scopes, apiKey, expiresAt: Date.now() + REFRESH_TTL_S * 1000 };
 		await this.kv.set(`at:${access}`, JSON.stringify(accessEntry), ACCESS_TTL_S);
 		await this.kv.set(`rt:${refresh}`, JSON.stringify(refreshEntry), REFRESH_TTL_S);
 		return { access_token: access, token_type: "Bearer", expires_in: ACCESS_TTL_S, refresh_token: refresh, scope: scopes.join(" ") };
