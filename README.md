@@ -388,12 +388,12 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 | Tool                            | What it does                                      | Notes                                               |
 | ------------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| `get_generation_webhook_secret` | Get the secret that signs generation webhooks     |                                                     |
 | `upload_generation_image`       | Upload a reference image                          | local server only                                   |
 | `upload_generation_media`       | Upload an image, video or sound to generate from  | local server only                                   |
 | `quote_generation`              | Price a generation without generating             |                                                     |
 | `create_generation`             | Generate an image, a video, a sound or a 3D model | spends credits, asks first, opens the CutPro player |
 | `list_generations`              | List generations                                  | opens the CutPro player                             |
-| `get_generation_webhook_secret` | Get the secret that signs generation webhooks     |                                                     |
 | `get_generation`                | Get a generation                                  | opens the CutPro player                             |
 | `delete_generation`             | Delete a generation                               |                                                     |
 | `open_generation_edit`          | Open a generated or persona video to edit or post |                                                     |
