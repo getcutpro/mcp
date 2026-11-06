@@ -9,6 +9,8 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
 [![Smithery](https://img.shields.io/badge/Smithery-cutpro%2Fmcp-7C3AED?style=flat-square)](https://smithery.ai/servers/cutpro/mcp)
 
+![Asking for a video in chat: CutPro quotes 48 credits, waits for a yes and returns the generated video](https://raw.githubusercontent.com/getcutpro/mcp/main/assets/demo.gif)
+
 A Model Context Protocol (MCP) server for AI generation of every kind, AI characters and clips. It exposes the full [CutPro API](https://cut.pro/docs/reference) as tools, so an LLM can:
 
 - **Generate with any top AI model**: images and videos (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), voices (ElevenLabs, Gemini), music (Suno, Eleven Music, MiniMax), sound effects, talking avatars and 3D models (Rodin, Hunyuan3D, TRELLIS), plus image and video tools (upscale, background removal, editing), from a prompt, images, a video or a sound, with each model's exact price before anything runs.
@@ -26,6 +28,8 @@ Ask in any language. Some things people do with it:
 - "Turn this photo of my lamp into a 3D model for my store"
 - "Clip yesterday's podcast into 5 shorts with captions"
 - "Faça uma narração em português deste roteiro" / "Haz un video de una cafetería al amanecer"
+
+Prefer code? [examples/](examples) has the same flows as plain Node.js scripts: generate a video and post it, clip a YouTube video, auto-post a live stream's best moments.
 
 ### Key features
 

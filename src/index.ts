@@ -669,7 +669,7 @@ async function startHttp(port: number): Promise<void> {
 			}),
 		);
 		app.get("/oauth/requests/:id", (req, res) => void provider.describeRequest(req, res));
-		app.post("/oauth/consent", express.urlencoded({ extended: false }), (req, res) => void provider.handleConsent(req, res));
+		app.post("/oauth/consent", express.json(), (req, res) => void provider.handleConsent(req, res));
 		guard = requireBearerAuth({ verifier: provider, resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(resourceServerUrl) });
 	}
 

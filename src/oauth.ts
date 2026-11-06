@@ -130,25 +130,26 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 		res.json({ client_name: pending.clientName, redirect_host: new URL(pending.redirectUri).host });
 	}
 
+	// Answer with JSON, not a redirect: a redirect to an app scheme (claude://) never unloads the consent page.
 	async handleConsent(req: Request, res: Response): Promise<void> {
 		const body: Record<string, unknown> = req.body ?? {};
 		const pendingId = typeof body.pending === "string" ? body.pending : "";
 		const pending = await this.readPending(pendingId);
 		// cut.pro owns every screen of this flow, so an expired or failed request goes back there to be explained in the user's language.
 		if (!pending) {
-			res.redirect(this.connectUrl(pendingId));
+			res.json({ location: this.connectUrl(pendingId) });
 			return;
 		}
 
 		if (body.deny === "1") {
 			await this.kv.del(`pending:${pendingId}`);
-			res.redirect(this.callbackUrl(pending, { error: "access_denied" }));
+			res.json({ location: this.callbackUrl(pending, { error: "access_denied" }) });
 			return;
 		}
 
 		const apiKey = typeof body.api_key === "string" ? body.api_key.trim() : "";
 		if (!apiKey || !(await this.validateKey(apiKey))) {
-			res.redirect(`${this.connectUrl(pendingId)}&failed=1`);
+			res.json({ location: `${this.connectUrl(pendingId)}&failed=1` });
 			return;
 		}
 
@@ -163,7 +164,7 @@ export class CutproOAuthProvider implements OAuthServerProvider {
 			expiresAt: Date.now() + CODE_TTL_S * 1000,
 		};
 		await this.kv.set(`code:${code}`, JSON.stringify(entry), CODE_TTL_S);
-		res.redirect(this.callbackUrl(pending, { code }));
+		res.json({ location: this.callbackUrl(pending, { code }) });
 	}
 
 	async challengeForAuthorizationCode(_client: OAuthClientInformationFull, authorizationCode: string): Promise<string> {
