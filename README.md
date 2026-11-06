@@ -1,91 +1,57 @@
-## CutPro MCP
+<div align="center">
 
-[![npm version](https://img.shields.io/npm/v/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
-[![npm downloads](https://img.shields.io/npm/dm/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
-[![CI](https://img.shields.io/github/actions/workflow/status/getcutpro/mcp/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/getcutpro/mcp/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/getcutpro/mcp?style=flat-square&color=7C3AED)](https://github.com/getcutpro/mcp/releases)
-[![MCP 2026-07-28](https://img.shields.io/badge/MCP-2026--07--28-7C3AED?style=flat-square)](https://modelcontextprotocol.io/specification/2026-07-28)
+<img src="https://raw.githubusercontent.com/getcutpro/mcp/main/plugin/assets/logo.png" width="64" alt="CutPro">
+
+# CutPro MCP
+
+**Make videos, images, music and voices with the best AI models, clip long videos into shorts and post them everywhere. All from your chat.**
+
+[![npm](https://img.shields.io/npm/v/@cutpro/mcp?style=flat-square&color=7C3AED&label=npm)](https://www.npmjs.com/package/@cutpro/mcp)
+[![downloads](https://img.shields.io/npm/dm/@cutpro/mcp?style=flat-square&color=7C3AED)](https://www.npmjs.com/package/@cutpro/mcp)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-cutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7C3AED?style=flat-square)](LICENSE)
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.getcutpro%2Fcutpro-7C3AED?style=flat-square)](https://registry.modelcontextprotocol.io)
-[![Smithery](https://img.shields.io/badge/Smithery-cutpro%2Fmcp-7C3AED?style=flat-square)](https://smithery.ai/servers/cutpro/mcp)
 
-![Asking for a video in chat: CutPro quotes 48 credits, waits for a yes and returns the generated video](https://raw.githubusercontent.com/getcutpro/mcp/main/assets/demo.gif)
+[Quick start](#quick-start) · [Examples](examples) · [Tools](#tools) · [Docs](https://cut.pro/docs/mcp)
 
-A Model Context Protocol (MCP) server for AI generation of every kind, AI characters and clips. It exposes the full [CutPro API](https://cut.pro/docs/reference) as tools, so an LLM can:
+<img src="https://raw.githubusercontent.com/getcutpro/mcp/main/assets/demo.gif" width="720" alt="Asking for a video in chat: CutPro quotes 48 credits, waits for a yes and returns the generated video">
 
-- **Generate with any top AI model**: images and videos (Veo, Kling, Seedance, Wan, Nano Banana, GPT Image), voices (ElevenLabs, Gemini), music (Suno, Eleven Music, MiniMax), sound effects, talking avatars and 3D models (Rodin, Hunyuan3D, TRELLIS), plus image and video tools (upscale, background removal, editing), from a prompt, images, a video or a sound, with each model's exact price before anything runs.
-- **Create AI characters**: realistic people that stay consistent across photos and videos, then swap them into any video while scene, camera, motion and sound stay.
-- **Clip long videos and live streams**: find the best moments and render the final MP4.
-- **Post and schedule**: publish any clip, generated video or persona video to TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn, Pinterest and Bluesky, now or at a set time.
-- **Transcribe**: any audio or video into timed captions (SRT, VTT, text or JSON).
+</div>
 
-Ask in any language. Some things people do with it:
+## What it does
 
-- "Make a 9:16 ad of my sneakers with Veo and schedule it on TikTok for Friday 6 pm"
-- "Create an upbeat instrumental for my YouTube intro"
-- "Make this photo of me say the script below in Spanish"
-- "Upscale this product photo and remove the background"
-- "Turn this photo of my lamp into a 3D model for my store"
-- "Clip yesterday's podcast into 5 shorts with captions"
-- "Faça uma narração em português deste roteiro" / "Haz un video de una cafetería al amanecer"
+- 🎬 **Generate** videos, images, music, voices, talking avatars and 3D with Veo, Kling, Seedance, Nano Banana, GPT Image, Suno and more
+- ✂️ **Clip** long videos and live streams into captioned shorts
+- 📲 **Post** to TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn, Pinterest and Bluesky, through each official API
+- 🧑 **Create AI characters** that look the same in every photo and video
+- 📝 **Transcribe** any audio or video into SRT, VTT, text or JSON
 
-Prefer code? [examples/](examples) has the same flows as plain Node.js scripts: generate a video and post it, clip a YouTube video, auto-post a live stream's best moments.
+Every paid call shows the exact price first and waits for your yes.
 
-### Key features
+## Quick start
 
-- **Always in sync**. Every v1 endpoint is a tool, generated from the live API spec: the model catalog and generation of every kind, AI characters, workspace, credits, videos and uploads, clipping, clips, channel and live monitoring, templates, renders, transcriptions, posts and connections. Chat completions and embeddings stay out: they are for code, and an AI client is already a language model.
-- **Runs everywhere**. stdio for local clients (Claude Code, Cursor, Claude Desktop, Windsurf, VS Code, Cline, Zed) and a hosted Streamable HTTP endpoint with OAuth for ChatGPT and Claude.ai.
-- **Latest protocol**. Speaks MCP [2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) (stateless, `server/discover`, cacheable lists, multi round-trip requests) and every earlier revision, on the same endpoint.
-- **Results you can watch**. Clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) show generated images, videos, voices and music, 3D files, AI characters, clips and renders as an inline player that follows a job until it is ready, with buttons to open it in CutPro, animate an image, use a voice in a video or schedule a post.
-- **Asks before it spends**. On clients that support elicitation, every call that charges credits shows the price and waits for the user's confirmation before anything is charged.
+**ChatGPT, Claude.ai and other web clients:** add a custom connector with this URL and sign in. No API key needed.
 
-## Getting started
-
-### Requirements
-
-- Node.js 18 or newer.
-- A CutPro account (any plan) and an API key. Generate one at [cut.pro/studio/me/api-keys](https://cut.pro/studio/me/api-keys).
-- An MCP-compatible client.
-
-### Standard config
-
-Most clients use the same JSON. Add your API key under `env`:
-
-```json
-{
-	"mcpServers": {
-		"cutpro": {
-			"command": "npx",
-			"args": ["-y", "@cutpro/mcp@latest"],
-			"env": { "CUTPRO_API_KEY": "<your-api-key>" }
-		}
-	}
-}
+```
+https://mcp.cut.pro
 ```
 
-### Install
-
-[<img src="https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white" alt="Install in VS Code">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522cutpro%2522%252C%2522command%2522%253A%2522npx%2522%252C%2522args%2522%253A%255B%2522-y%2522%252C%2522%2540cutpro%252Fmcp%2540latest%2522%255D%257D)
-[<img src="https://img.shields.io/badge/Cursor-Install_Server-000000?style=flat-square&logo=cursor&logoColor=white" alt="Install in Cursor">](https://cursor.com/en/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
-[<img src="https://img.shields.io/badge/Cursor-Connect_hosted-000000?style=flat-square&logo=cursor&logoColor=white" alt="Connect the hosted server in Cursor">](https://cursor.com/en/install-mcp?name=cutpro&config=eyJ1cmwiOiJodHRwczovL21jcC5jdXQucHJvIn0=)
-[<img src="https://img.shields.io/badge/LM_Studio-Install_Server-4A26C9?style=flat-square" alt="Install in LM Studio">](https://lmstudio.ai/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
-[<img src="https://img.shields.io/badge/Goose-Install_Server-1A1A1A?style=flat-square" alt="Install in Goose">](goose://extension?cmd=npx&arg=-y&arg=%40cutpro%2Fmcp%40latest&id=cutpro&name=CutPro&description=AI%20video%20clipping%20via%20the%20CutPro%20API)
-
-After installing via a button, add your `CUTPRO_API_KEY` to the server's `env`.
-
-<details>
-<summary>Claude Code</summary>
+**Claude Code:**
 
 ```bash
 claude mcp add cutpro --env CUTPRO_API_KEY=<your-api-key> -- npx -y @cutpro/mcp@latest
 ```
 
-</details>
+Get a key at [cut.pro/studio/me/api-keys](https://cut.pro/studio/me/api-keys). One click for other clients, then add the key to the server's `env`:
+
+[<img src="https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white" alt="Install in VS Code">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522cutpro%2522%252C%2522command%2522%253A%2522npx%2522%252C%2522args%2522%253A%255B%2522-y%2522%252C%2522%2540cutpro%252Fmcp%2540latest%2522%255D%257D)
+[<img src="https://img.shields.io/badge/Cursor-Install-000000?style=flat-square&logo=cursor&logoColor=white" alt="Install in Cursor">](https://cursor.com/en/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
+[<img src="https://img.shields.io/badge/LM_Studio-Install-4A26C9?style=flat-square" alt="Install in LM Studio">](https://lmstudio.ai/install-mcp?name=cutpro&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjdXRwcm8vbWNwQGxhdGVzdCJdfQ)
+[<img src="https://img.shields.io/badge/Goose-Install-1A1A1A?style=flat-square" alt="Install in Goose">](goose://extension?cmd=npx&arg=-y&arg=%40cutpro%2Fmcp%40latest&id=cutpro&name=CutPro&description=AI%20video%20clipping%20via%20the%20CutPro%20API)
 
 <details>
-<summary>Claude Desktop</summary>
+<summary>Claude Desktop, Cursor, Windsurf, Cline, Gemini CLI, Codex</summary>
 
-Add to `claude_desktop_config.json` (Settings, Developer, Edit Config):
+Most clients take this JSON (Claude Desktop: Settings, Developer, Edit Config):
 
 ```json
 {
@@ -99,33 +65,13 @@ Add to `claude_desktop_config.json` (Settings, Developer, Edit Config):
 }
 ```
 
-</details>
-
-<details>
-<summary>Cursor / Windsurf / VS Code (manual)</summary>
-
-Add the standard config above to the client's MCP settings (`mcp.json` / `mcpServers`).
-</details>
-
-<details>
-<summary>Cline</summary>
-
-Open the MCP Servers panel, choose Configure, and add the standard config above.
-</details>
-
-<details>
-<summary>Gemini CLI</summary>
+Gemini CLI:
 
 ```bash
 gemini mcp add cutpro npx -y @cutpro/mcp@latest -e CUTPRO_API_KEY=<your-api-key>
 ```
 
-</details>
-
-<details>
-<summary>Codex</summary>
-
-Add to `~/.codex/config.toml`:
+Codex, in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.cutpro]
@@ -134,24 +80,7 @@ args = ["-y", "@cutpro/mcp@latest"]
 env = { "CUTPRO_API_KEY" = "<your-api-key>" }
 ```
 
-</details>
-
-<details>
-<summary>ChatGPT and Claude.ai (hosted, no install)</summary>
-
-Use the hosted server. Add a custom connector pointing to:
-
-```
-https://mcp.cut.pro
-```
-
-You sign in to cut.pro, pick the workspace and approve the connection, so no API key and no local setup are needed. Any CutPro plan can connect; jobs use the workspace's credits. Disconnect at any time in Settings, under Connected apps.
-</details>
-
-<details>
-<summary>Claude Code plugin</summary>
-
-The plugin bundles the hosted server with a skill that teaches Claude the CutPro workflows:
+Claude Code plugin, with a skill that teaches the CutPro workflows:
 
 ```bash
 claude plugin marketplace add getcutpro/mcp
@@ -160,61 +89,22 @@ claude plugin install cutpro@cutpro
 
 </details>
 
-## Updates
+## Try asking
 
-Every install stays current on its own:
+> Make a 9:16 ad of my sneakers with Veo and schedule it on TikTok for Friday 6 pm
 
-- **Hosted** (`https://mcp.cut.pro`, the Claude plugin and the ChatGPT app): always the latest release, nothing to do.
-- **Local** (`npx -y @cutpro/mcp@latest`): on start the server checks npm and, when a newer release exists, hands the session to it. This works even for a pinned version or a stale `npx` cache. Set `CUTPRO_MCP_AUTO_UPDATE=0` to stay on the installed version; the server then tells the model an update is available.
-- **Tools**: new API endpoints show up as tools within ten minutes, without any release.
+> Clip yesterday's podcast into 5 shorts with captions
 
-Every release is listed with its notes in [Releases](https://github.com/getcutpro/mcp/releases) and [CHANGELOG.md](CHANGELOG.md).
+> Make this photo of me say the script below in Spanish
 
-## Configuration
-
-The server is configured with environment variables.
-
-| Variable                 | Description                                                                 | Required    |
-| ------------------------ | --------------------------------------------------------------------------- | ----------- |
-| `CUTPRO_API_KEY`         | Your CutPro API key.                                                        | Yes (stdio) |
-| `CUTPRO_WORKSPACE_ID`    | Selects the workspace for multi-workspace keys.                             | No          |
-| `CUTPRO_API_URL`         | Override the API base URL. Defaults to `https://api.cut.pro/api/v1`.        | No          |
-| `CUTPRO_MCP_AUTO_UPDATE` | `0` keeps the installed version instead of switching to the newest release. | No          |
-
-<details>
-<summary>Self-hosting the remote (Streamable HTTP + OAuth)</summary>
-
-| Variable                      | Description                                                                                              |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `MCP_TRANSPORT=http` / `PORT` | Serve Streamable HTTP at the root instead of stdio.                                                      |
-| `MCP_OAUTH=1`                 | Enable the full OAuth 2.1 layer (discovery, DCR, PKCE) for browser clients.                              |
-| `MCP_PUBLIC_URL`              | Public endpoint, e.g. `https://mcp.cut.pro`. Its origin becomes the OAuth issuer.                        |
-| `MCP_REDIS_URL`               | Back OAuth state with Redis so it survives restarts and scales across instances.                         |
-| `CUTPRO_APP_URL`              | Where the consent screen lives. Defaults to `https://cut.pro`.                                           |
-| `OPENAI_APPS_CHALLENGE`       | Domain verification token from the OpenAI plugin portal, served at `/.well-known/openai-apps-challenge`. |
-
-```bash
-MCP_TRANSPORT=http PORT=8787 MCP_OAUTH=1 \
-MCP_PUBLIC_URL=https://mcp.cut.pro MCP_REDIS_URL=redis://127.0.0.1:6379 \
-npx -y @cutpro/mcp@latest
-```
-
-In OAuth mode the user signs in on cut.pro and approves the app there; cut.pro creates a key for that app and workspace, and the access token maps server side to it. Clients can register dynamically (DCR) or present a Client ID Metadata Document (CIMD). Without `MCP_REDIS_URL`, an in-memory store is used (single instance, state lost on restart).
-</details>
+Any language works. Prefer code? [examples/](examples) has the same flows as plain Node.js scripts.
 
 ## Tools
 
-The tools are built from the API's own OpenAPI spec (`/api/v1/openapi.json`), so they always match the [API reference](https://cut.pro/docs/reference): one tool per endpoint, named after its `operationId` in snake case (`analyzeVideo` is `analyze_video`, `createSubmission` is `create_submission`), with the endpoint's own parameters, descriptions and responses. A new endpoint becomes a tool within ten minutes of reaching the API, with no new release of this package.
+One tool per [CutPro API](https://cut.pro/docs/reference) endpoint, built from the live spec: a new endpoint becomes a tool within ten minutes, with no release. Clients with [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) show results in an inline player.
 
-The usual flows:
-
-- **Anything generated**: `list_featured_models` (or `list_models` for the full catalog), `quote_generation` for the exact price, `create_generation` with that price and `wait`, then `get_generation` until it is ready. A model's own fields go in `options`, named as in its `parameters`. Pass a ready image's `output.image_id` to animate it, or a voice's `output.audio_id` to a talking avatar.
-- **AI character**: `get_persona_catalog`, `create_persona`, `get_persona` until its photo is ready, `save_persona`, then `quote_persona_swap` and `create_persona_video` to put it in a video.
-- **Clips**: `analyze_video`, `create_submission`, `get_submission` until it completes, `list_clips`, `render_clip`, `get_render` and `download_render`.
-
-Annotations come from the spec too: `GET` is read-only, `PUT`, `PATCH` and `DELETE` are destructive, and a route declares more in its `x-mcp` extension (spending credits, publishing to a social network, reaching an arbitrary public URL). Routes that need a file uploaded from disk are listed only by the local (stdio) server, since a chat client cannot send bytes.
-
-### All tools
+<details>
+<summary>See all tools</summary>
 
 <!-- tools:start -->
 
@@ -408,14 +298,37 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 <!-- tools:end -->
 
-## Links
+</details>
 
-- Docs: [cut.pro/docs/mcp](https://cut.pro/docs/mcp)
-- npm: [@cutpro/mcp](https://www.npmjs.com/package/@cutpro/mcp)
-- MCP Registry: `io.github.getcutpro/cutpro`
-- Releases: [github.com/getcutpro/mcp/releases](https://github.com/getcutpro/mcp/releases) · [CHANGELOG.md](CHANGELOG.md)
-- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Security: [SECURITY.md](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+<details>
+<summary>Configuration and self-hosting</summary>
 
-## License
+| Variable                 | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `CUTPRO_API_KEY`         | Your CutPro API key. Required for the local (stdio) server.                 |
+| `CUTPRO_WORKSPACE_ID`    | Selects the workspace for multi-workspace keys.                             |
+| `CUTPRO_API_URL`         | Override the API base URL. Defaults to `https://api.cut.pro/api/v1`.        |
+| `CUTPRO_MCP_AUTO_UPDATE` | `0` keeps the installed version instead of switching to the newest release. |
 
-MIT
+The local server checks npm on start and hands the session to a newer release, even from a stale `npx` cache. The hosted one is always current.
+
+To host the remote yourself (Streamable HTTP with OAuth 2.1, DCR and CIMD):
+
+| Variable                      | Description                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `MCP_TRANSPORT=http` / `PORT` | Serve Streamable HTTP at the root instead of stdio.                                                      |
+| `MCP_OAUTH=1`                 | Enable OAuth (discovery, DCR, PKCE) for browser clients.                                                 |
+| `MCP_PUBLIC_URL`              | Public endpoint, e.g. `https://mcp.cut.pro`. Its origin becomes the OAuth issuer.                        |
+| `MCP_REDIS_URL`               | Keep OAuth state in Redis so it survives restarts. Without it, state lives in memory.                    |
+| `CUTPRO_APP_URL`              | Where the consent screen lives. Defaults to `https://cut.pro`.                                           |
+| `OPENAI_APPS_CHALLENGE`       | Domain verification token from the OpenAI plugin portal, served at `/.well-known/openai-apps-challenge`. |
+
+```bash
+MCP_TRANSPORT=http PORT=8787 MCP_OAUTH=1 MCP_PUBLIC_URL=https://mcp.cut.pro npx -y @cutpro/mcp@latest
+```
+
+</details>
+
+---
+
+[Docs](https://cut.pro/docs/mcp) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · MIT License
