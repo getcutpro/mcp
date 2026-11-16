@@ -21,5 +21,5 @@ jobs:
       - name: Commit when the list changed
         run: |
           git diff --quiet README.md && exit 0
-          git -c user.name=ToledoSDL -c user.email=lucastoledoaraujo999@gmail.com commit -am "Update the tool list from the live API"
+          git -c user.name=ToledoSDL -c user.email=65132614+ToledoSDL@users.noreply.github.com commit -am "Update the tool list from the live API"
           git push

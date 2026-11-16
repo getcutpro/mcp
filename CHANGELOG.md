@@ -2,6 +2,11 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.0.4 (2026-11-16)
+
+- Updated the bundled MCP SDK packages (`@modelcontextprotocol/server`, `server-legacy` and `node`) to their latest 2.x releases.
+- Updated the `express` and `zod` dependencies to newer minor versions.
+
 ## 3.0.3 (2026-11-01)
 
 - The ChatGPT plugin listing (1.2.1) names no third-party model and no price, as the OpenAI directory asks.
