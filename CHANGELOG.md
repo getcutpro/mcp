@@ -2,6 +2,14 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.1.1 (2026-11-18)
+
+- Rework clips without clipping again: get new AI title suggestions, make a copy to try another version, create the part that comes right after a clip, and rate clips so CutPro learns what you like.
+- Find channels to monitor by name, or among the channels live right now.
+- Every live stream now shows a summary of its clips and credits.
+- Before posting, CutPro writes the caption for each network, shows how many more posts each account takes today and suggests a good time to post.
+- Start a transcription from a video link, and correct the transcript afterwards.
+
 ## 3.1.0 (2026-11-18)
 
 - New clip tools: `suggest_clip_titles` and `rename_clip` for titles, `duplicate_clip` for a second version, `create_next_part` for the part that follows a clip, and `rate_clip` to tell the AI what was good or bad.
