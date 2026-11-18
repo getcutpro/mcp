@@ -169,44 +169,44 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Clipping: clips
 
-| Tool                      | What it does                       | Notes                   |
-| ------------------------- | ---------------------------------- | ----------------------- |
-| `apply_template`          | Apply template to clips            |                         |
-| `get_template_job`        | Progress of a template batch       |                         |
-| `list_clips`              | List generated clips               | opens the CutPro player |
-| `delete_clip`             | Delete a clip                      |                         |
-| `download_clip_subtitles` | Download a clip's captions         |                         |
-| `list_clip_ids`           | List clip IDs of a submission      |                         |
-| `duplicate_clip`          | Duplicate a clip                   |                         |
-| `rate_clip`               | Rate a clip                        |                         |
-| `suggest_clip_titles`     | Suggest new titles for a clip      |                         |
-| `rename_clip`             | Rename a clip                      |                         |
-| `get_next_part`           | Whether a clip can get a next part |                         |
-| `create_next_part`        | Make the next part of a clip       |                         |
-| `render_clip`             | Render a clip                      | opens the CutPro player |
+| Tool                      | What it does                              | Notes                   |
+| ------------------------- | ----------------------------------------- | ----------------------- |
+| `apply_template`          | Apply template to clips                   |                         |
+| `get_template_job`        | Progress of a submission's template batch |                         |
+| `list_clips`              | List generated clips                      | opens the CutPro player |
+| `delete_clip`             | Delete a clip                             |                         |
+| `download_clip_subtitles` | Download a clip's captions                |                         |
+| `list_clip_ids`           | List clip IDs of a submission             |                         |
+| `duplicate_clip`          | Duplicate a clip                          |                         |
+| `rate_clip`               | Rate a clip                               |                         |
+| `suggest_clip_titles`     | Suggest new titles for a clip             |                         |
+| `rename_clip`             | Rename a clip                             |                         |
+| `get_next_part`           | Whether a clip can get a next part        |                         |
+| `create_next_part`        | Make the next part of a clip              |                         |
+| `render_clip`             | Render a clip                             | opens the CutPro player |
 
 #### Live clipping: monitored channels
 
-| Tool                         | What it does                      | Notes |
-| ---------------------------- | --------------------------------- | ----- |
-| `list_monitors`              | List monitored channels           |       |
-| `create_monitor`             | Monitor a channel                 |       |
-| `search_channels`            | Search channels to monitor        |       |
-| `discover_lives`             | Channels live right now           |       |
-| `get_monitor`                | Get a monitored channel           |       |
-| `update_monitor`             | Update a monitor                  |       |
-| `delete_monitor`             | Stop watching a channel           |       |
-| `start_monitor`              | Start monitoring                  |       |
-| `stop_monitor`               | Stop monitoring                   |       |
-| `list_broadcasts`            | List broadcasts of a live monitor |       |
-| `get_broadcast`              | Get a broadcast                   |       |
-| `list_broadcast_clip_ids`    | List clip IDs of a broadcast      |       |
-| `list_broadcast_clips`       | List clips of a broadcast         |       |
-| `apply_broadcast_template`   | Apply template to broadcast clips |       |
-| `get_broadcast_template_job` | Progress of a template batch      |       |
-| `delete_broadcast_clip`      | Delete a broadcast clip           |       |
-| `delete_broadcast_clips`     | Delete several broadcast clips    |       |
-| `render_broadcast_clip`      | Render a broadcast clip           |       |
+| Tool                         | What it does                             | Notes |
+| ---------------------------- | ---------------------------------------- | ----- |
+| `list_monitors`              | List monitored channels                  |       |
+| `create_monitor`             | Monitor a channel                        |       |
+| `search_channels`            | Search channels to monitor               |       |
+| `discover_lives`             | Channels live right now                  |       |
+| `get_monitor`                | Get a monitored channel                  |       |
+| `update_monitor`             | Update a monitor                         |       |
+| `delete_monitor`             | Stop watching a channel                  |       |
+| `start_monitor`              | Start monitoring                         |       |
+| `stop_monitor`               | Stop monitoring                          |       |
+| `list_broadcasts`            | List broadcasts of a live monitor        |       |
+| `get_broadcast`              | Get a broadcast                          |       |
+| `list_broadcast_clip_ids`    | List clip IDs of a broadcast             |       |
+| `list_broadcast_clips`       | List clips of a broadcast                |       |
+| `apply_broadcast_template`   | Apply template to broadcast clips        |       |
+| `get_broadcast_template_job` | Progress of a broadcast's template batch |       |
+| `delete_broadcast_clip`      | Delete a broadcast clip                  |       |
+| `delete_broadcast_clips`     | Delete several broadcast clips           |       |
+| `render_broadcast_clip`      | Render a broadcast clip                  |       |
 
 #### Clipping: strategies
 
