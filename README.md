@@ -108,7 +108,7 @@ One tool per [CutPro API](https://cut.pro/docs/reference) endpoint, built from t
 
 <!-- tools:start -->
 
-99 tools and 10 prompts, generated from the live API spec and the server.
+132 tools and 10 prompts, generated from the live API spec and the server.
 
 #### Prompts
 
@@ -143,21 +143,25 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Clipping: source videos
 
-| Tool                              | What it does                | Notes             |
-| --------------------------------- | --------------------------- | ----------------- |
-| `create_video_upload`             | Start an upload             | local server only |
-| `complete_video_multipart_upload` | Finalize a multipart upload | local server only |
-| `abort_video_multipart_upload`    | Discard a multipart upload  | local server only |
-| `complete_video_upload`           | Complete an upload          | local server only |
-| `list_videos`                     | List videos                 |                   |
-| `delete_video`                    | Delete a video              |                   |
+| Tool                              | What it does                      | Notes             |
+| --------------------------------- | --------------------------------- | ----------------- |
+| `create_video_upload`             | Start an upload                   | local server only |
+| `complete_video_multipart_upload` | Finalize a multipart upload       | local server only |
+| `abort_video_multipart_upload`    | Discard a multipart upload        | local server only |
+| `complete_video_upload`           | Complete an upload                | local server only |
+| `list_videos`                     | List videos                       |                   |
+| `delete_video`                    | Delete a video                    |                   |
+| `get_video`                       | Get a video                       |                   |
+| `download_video_subtitles`        | Download a video's captions       |                   |
+| `request_video_quality`           | Fetch the video above 1080p       |                   |
+| `get_video_quality`               | Progress of the video above 1080p |                   |
 
 #### Clipping: clip a video
 
 | Tool                | What it does                | Notes |
 | ------------------- | --------------------------- | ----- |
-| `create_submission` | Submit a video for clipping |       |
 | `analyze_video`     | Analyze a video             |       |
+| `create_submission` | Submit a video for clipping |       |
 | `list_submissions`  | List submissions            |       |
 | `get_submission`    | Get submission              |       |
 | `delete_submission` | Delete submission           |       |
@@ -165,29 +169,53 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Clipping: clips
 
-| Tool                      | What it does               | Notes                   |
-| ------------------------- | -------------------------- | ----------------------- |
-| `apply_template`          | Apply template to clips    |                         |
-| `list_clips`              | List generated clips       | opens the CutPro player |
-| `delete_clip`             | Delete a clip              |                         |
-| `download_clip_subtitles` | Download a clip's captions |                         |
-| `render_clip`             | Render a clip              | opens the CutPro player |
+| Tool                      | What it does                       | Notes                   |
+| ------------------------- | ---------------------------------- | ----------------------- |
+| `apply_template`          | Apply template to clips            |                         |
+| `get_template_job`        | Progress of a template batch       |                         |
+| `list_clips`              | List generated clips               | opens the CutPro player |
+| `delete_clip`             | Delete a clip                      |                         |
+| `download_clip_subtitles` | Download a clip's captions         |                         |
+| `list_clip_ids`           | List clip IDs of a submission      |                         |
+| `duplicate_clip`          | Duplicate a clip                   |                         |
+| `rate_clip`               | Rate a clip                        |                         |
+| `suggest_clip_titles`     | Suggest new titles for a clip      |                         |
+| `rename_clip`             | Rename a clip                      |                         |
+| `get_next_part`           | Whether a clip can get a next part |                         |
+| `create_next_part`        | Make the next part of a clip       |                         |
+| `render_clip`             | Render a clip                      | opens the CutPro player |
 
 #### Live clipping: monitored channels
 
-| Tool                       | What it does                      | Notes |
-| -------------------------- | --------------------------------- | ----- |
-| `list_monitors`            | List monitored channels           |       |
-| `create_monitor`           | Monitor a channel                 |       |
-| `get_monitor`              | Get a monitored channel           |       |
-| `update_monitor`           | Update a monitor                  |       |
-| `delete_monitor`           | Stop watching a channel           |       |
-| `start_monitor`            | Start monitoring                  |       |
-| `stop_monitor`             | Stop monitoring                   |       |
-| `list_broadcasts`          | List broadcasts of a live monitor |       |
-| `list_broadcast_clips`     | List clips of a broadcast         |       |
-| `apply_broadcast_template` | Apply template to broadcast clips |       |
-| `render_broadcast_clip`    | Render a broadcast clip           |       |
+| Tool                         | What it does                      | Notes |
+| ---------------------------- | --------------------------------- | ----- |
+| `list_monitors`              | List monitored channels           |       |
+| `create_monitor`             | Monitor a channel                 |       |
+| `search_channels`            | Search channels to monitor        |       |
+| `discover_lives`             | Channels live right now           |       |
+| `get_monitor`                | Get a monitored channel           |       |
+| `update_monitor`             | Update a monitor                  |       |
+| `delete_monitor`             | Stop watching a channel           |       |
+| `start_monitor`              | Start monitoring                  |       |
+| `stop_monitor`               | Stop monitoring                   |       |
+| `list_broadcasts`            | List broadcasts of a live monitor |       |
+| `get_broadcast`              | Get a broadcast                   |       |
+| `list_broadcast_clip_ids`    | List clip IDs of a broadcast      |       |
+| `list_broadcast_clips`       | List clips of a broadcast         |       |
+| `apply_broadcast_template`   | Apply template to broadcast clips |       |
+| `get_broadcast_template_job` | Progress of a template batch      |       |
+| `delete_broadcast_clip`      | Delete a broadcast clip           |       |
+| `delete_broadcast_clips`     | Delete several broadcast clips    |       |
+| `render_broadcast_clip`      | Render a broadcast clip           |       |
+
+#### Clipping: strategies
+
+| Tool              | What it does               | Notes |
+| ----------------- | -------------------------- | ----- |
+| `list_strategies` | List clipping strategies   |       |
+| `create_strategy` | Create a clipping strategy |       |
+| `update_strategy` | Update a clipping strategy |       |
+| `delete_strategy` | Delete a clipping strategy |       |
 
 #### Editing: templates
 
@@ -218,16 +246,24 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Posting: social media posts
 
-| Tool               | What it does        | Notes |
-| ------------------ | ------------------- | ----- |
-| `create_post`      | Create a post       |       |
-| `list_posts`       | List posts          |       |
-| `get_post`         | Get a post          |       |
-| `cancel_post`      | Cancel a post       |       |
-| `update_post`      | Update a post       |       |
-| `publish_post`     | Trigger publish     |       |
-| `retry_post_item`  | Retry a failed item |       |
-| `delete_post_item` | Delete a post item  |       |
+| Tool                       | What it does                       | Notes |
+| -------------------------- | ---------------------------------- | ----- |
+| `create_post`              | Create a post                      |       |
+| `list_posts`               | List posts                         |       |
+| `write_post_description`   | Write the post description with AI |       |
+| `list_description_presets` | List saved description styles      |       |
+| `save_description_presets` | Replace saved description styles   |       |
+| `list_used_hashtags`       | Hashtags you already posted with   |       |
+| `get_post_usage`           | Posts left today per account       |       |
+| `get_post_availability`    | Posts per day per account          |       |
+| `get_best_post_time`       | Best time to post per account      |       |
+| `get_post`                 | Get a post                         |       |
+| `cancel_post`              | Cancel a post                      |       |
+| `update_post`              | Update a post                      |       |
+| `reschedule_post_items`    | Move items to a new time           |       |
+| `publish_post`             | Trigger publish                    |       |
+| `retry_post_item`          | Retry a failed item                |       |
+| `delete_post_item`         | Delete a post item                 |       |
 
 #### Transcription
 
@@ -236,9 +272,11 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 | `create_transcription_upload` | Start an upload                            | local server only |
 | `create_transcription`        | Transcribe a media file                    |                   |
 | `list_transcriptions`         | List transcriptions                        |                   |
+| `import_transcription`        | Transcribe a video from a link             |                   |
 | `get_transcription`           | Get transcription status                   |                   |
 | `delete_transcription`        | Delete a transcription                     |                   |
 | `get_transcription_cues`      | Get the transcript as JSON                 |                   |
+| `update_transcription_cues`   | Correct the transcript text                |                   |
 | `download_transcription`      | Download the transcript as a subtitle file |                   |
 
 #### AI characters

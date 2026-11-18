@@ -2,6 +2,14 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.1.0 (2026-11-18)
+
+- New clip tools: `suggest_clip_titles` and `rename_clip` for titles, `duplicate_clip` for a second version, `create_next_part` for the part that follows a clip, and `rate_clip` to tell the AI what was good or bad.
+- `create_submission` accepts `strategy_id` (from `list_strategies`) to change how clips are picked and sized. Its video input is now named `videoId` instead of `video_id`.
+- Live monitoring is easier: `search_channels` finds a channel by name, `discover_lives` lists who is live now with the batch cost, and `create_monitor` accepts a `creator_id`. `get_broadcast` summarizes one broadcast.
+- Posting gains `write_post_description` for a caption per network, `get_post_usage` for the posts each account still takes today, `get_best_post_time`, and `reschedule_post_items`.
+- Transcription gains `import_transcription` to transcribe a public video link directly, and `update_transcription_cues` to save corrected text.
+
 ## 3.0.4 (2026-11-16)
 
 - Updated the bundled MCP SDK packages (`@modelcontextprotocol/server`, `server-legacy` and `node`) to their latest 2.x releases.

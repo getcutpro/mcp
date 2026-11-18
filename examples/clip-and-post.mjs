@@ -8,13 +8,13 @@ if (!url) {
 	process.exit(1);
 }
 
-const video = await call("/clips/info", { method: "POST", body: JSON.stringify({ url }) });
+const video = await call("/videos/info", { method: "POST", body: JSON.stringify({ url }) });
 if (!(await confirm(`${video.title}: ${video.credits_cost} credits to clip. Go?`))) process.exit(0);
 
-const body = { video_id: video.id, ...(process.env.TEMPLATE_ID && { template_id: process.env.TEMPLATE_ID }) };
-const submission = await call("/clips", { method: "POST", body: JSON.stringify(body) });
+const body = process.env.TEMPLATE_ID ? { template_id: process.env.TEMPLATE_ID } : {};
+const submission = await call(`/videos/${video.id}/submissions`, { method: "POST", body: JSON.stringify(body) });
 
-const base = `/clips/${video.id}/submissions/${submission.id}`;
+const base = `/videos/${video.id}/submissions/${submission.id}`;
 const done = await until(() => call(base), CLIPPING, 15);
 if (done.status === "failed") throw new Error(`Clipping failed: ${done.error_code}`);
 

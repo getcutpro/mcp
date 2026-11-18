@@ -10,7 +10,7 @@ Every CutPro tool maps to one endpoint of the CutPro API and answers with the AP
 
 ## Spend and publish only after the user agrees
 
-Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `create_monitor`, `start_monitor`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `quote_generation` for anything generated, `get_persona_catalog` and `quote_persona_swap` for AI characters, `analyze_video` for clipping. When the price is above the balance (`get_balance`), say so before the user agrees, not after.
+Tools that spend credits or publish (`create_generation`, `create_persona`, `regenerate_persona`, `create_persona_video`, `create_submission`, `retry_submission`, `create_transcription`, `import_transcription`, `create_monitor`, `start_monitor`, `write_post_description`, `create_post`, `publish_post`, `retry_post_item`) are marked destructive. Before calling one, say what it will do and what it costs, and wait for a yes. The price is always free to read first: `quote_generation` for anything generated, `get_persona_catalog` and `quote_persona_swap` for AI characters, `analyze_video` for clipping. When the price is above the balance (`get_balance`), say so before the user agrees, not after.
 
 ## Generate anything with any model
 
@@ -36,17 +36,19 @@ An AI character (a persona in the API) is a realistic AI person that stays the s
 ## Clip a video
 
 1. `analyze_video` with the public URL. Show the title, duration and `credits_cost`. When `credits_unlimited` is true the job is not billed.
-2. After the user agrees, `create_submission` with the `id` from step 1 as `video_id`. Pass `template_id` (from `list_templates`) to style every clip, and `translate_to` to translate the captions.
+2. After the user agrees, `create_submission` with the `id` from step 1 as `videoId`. Pass `template_id` (from `list_templates`) to style every clip, `strategy_id` (from `list_strategies`) to change how clips are picked and sized, and `translate_to` to translate the captions.
 3. Poll `get_submission` about every 10 seconds until `status` is `completed` or `failed`. A set `waiting_reason` is not an error: the source is a premiere, a live still on air, or a recording the platform is still publishing, and the job resumes on its own. Tell the user instead of polling for hours.
 4. `list_clips` returns the clips best rated first. Present titles, `rating` and the start and end times.
 5. `render_clip` makes the final MP4. Poll `get_render` until `completed`, then `download_render` gives a signed link to hand to the user.
 
 A failed submission runs again with `retry_submission`, with the same settings.
 
+A clip can be reworked without clipping again, all free: `suggest_clip_titles` then `rename_clip` for a new title, `duplicate_clip` for a second version, `create_next_part` for the part right after it (its `edit_id` renders with `create_render`), and `rate_clip` to tell the AI what was good or bad.
+
 ## Follow a channel's lives
 
-1. `create_monitor` with the channel URL and `type: "live"`. CutPro clips each broadcast while it airs, a batch every 10 minutes, charged per batch that produced clips.
-2. `list_broadcasts` shows the channel's broadcasts; `ended_at: null` means it is on air.
+1. `create_monitor` with the channel URL and `type: "live"`. Without the URL, `search_channels` finds the channel by name and `discover_lives` lists who is live now, with what a batch costs; pass their `creator_id` instead. CutPro clips each broadcast while it airs, a batch every 10 minutes, charged per batch that produced clips.
+2. `list_broadcasts` shows the channel's broadcasts; `ended_at: null` means it is on air. `get_broadcast` sums one up: clips, ratings, credits charged and when the next clips land.
 3. `list_broadcast_clips` lists the clips of one broadcast, and `render_broadcast_clip` renders one.
 4. `stop_monitor` stops it. Monitoring has to stay on for at least 10 minutes first; earlier, `extra.remaining_seconds` says how long to wait.
 
@@ -57,17 +59,18 @@ A `type: "video"` monitor clips each new upload instead, and those clips arrive 
 Anything with an `edit_id` can be posted: a rendered clip, a broadcast clip, a generated video or a persona video.
 
 1. `list_connections` shows the social accounts connected to the workspace. When the account the user wants is missing, call `get_connection_link` with that network and give the user the link: it opens that network's sign-in on cut.pro, in this workspace, in one click. Then call `list_connections` again and carry on: the user never has to start over.
-2. `create_post` with the `edit_id`s and the chosen `connection_id`s, and per-network `metadata` (title, caption). Pass `scheduled_at` (ISO 8601, in the future, in the user's time zone converted to UTC) to schedule it; leave it out to publish now. Publishing is public and cannot be taken back, so confirm the caption, the accounts and the time first.
-3. `list_posts` shows what is scheduled and what went out. `update_post` moves a scheduled post or changes its text, and `cancel_post` cancels it before it goes out.
-4. Poll `get_post`. A failed item is retried with `retry_post_item` without touching the ones already published.
+2. Before posting, `write_post_description` writes the caption for each network from the clip (it usually costs 0 or 1 credit, so mention it), `get_post_usage` says how many posts each account still takes today, and `get_best_post_time` suggests when to post.
+3. `create_post` with the `edit_id`s and the chosen `connection_id`s, and per-network `metadata` (title, caption). Pass `scheduled_at` (ISO 8601, in the future, in the user's time zone converted to UTC) to schedule it; leave it out to publish now. Publishing is public and cannot be taken back, so confirm the caption, the accounts and the time first.
+4. `list_posts` shows what is scheduled and what went out. `update_post` changes the items still waiting, `reschedule_post_items` moves some of them, and `cancel_post` cancels it before it goes out.
+5. Poll `get_post`. A failed item is retried with `retry_post_item` without touching the ones already published.
 
 ## Transcribe
 
 Turns the speech of any video or audio into timed captions, with optional speaker labels, without clipping or rendering anything.
 
-1. A file from the user's disk goes up with `create_transcription_upload` (local server only); a video already in the library is used by its `media_id`.
+1. A file from the user's disk goes up with `create_transcription_upload` (local server only); a video already in the library is used by its `media_id`. A public video link skips this: `import_transcription` downloads and transcribes it, then go to step 2's polling.
 2. `create_transcription`, then poll `get_transcription` until it is ready.
-3. `get_transcription_cues` gives the timed text as JSON, good for summarizing, quoting or translating it in the chat. `download_transcription` gives an SRT, VTT or TXT file to hand over.
+3. `get_transcription_cues` gives the timed text as JSON, good for summarizing, quoting or translating it in the chat. `download_transcription` gives an SRT, VTT or TXT file to hand over. When the user fixes a misheard word, `update_transcription_cues` saves the corrected text of every cue, in the same order.
 
 ## When something fails
 
