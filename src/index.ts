@@ -126,7 +126,7 @@ function nullableToJsonSchema(node: unknown): unknown {
 	const schema: Record<string, unknown> = Object.fromEntries(Object.entries(rest).map(([key, value]) => [key, nullableToJsonSchema(value)]));
 	if (nullable !== true) return schema;
 	if (typeof schema.type === "string") schema.type = [schema.type, "null"];
-	if (Array.isArray(schema.enum)) schema.enum = [...schema.enum, null];
+	if (Array.isArray(schema.enum) && !schema.enum.includes(null)) schema.enum = [...schema.enum, null];
 	if (Array.isArray(schema.anyOf)) schema.anyOf = [...schema.anyOf, { type: "null" }];
 	return schema;
 }

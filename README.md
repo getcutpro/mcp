@@ -108,7 +108,7 @@ One tool per [CutPro API](https://cut.pro/docs/reference) endpoint, built from t
 
 <!-- tools:start -->
 
-132 tools and 10 prompts, generated from the live API spec and the server.
+135 tools and 10 prompts, generated from the live API spec and the server.
 
 #### Prompts
 
@@ -129,9 +129,12 @@ Ready-made requests your client offers as shortcuts (the `/` menu in Claude).
 
 #### Account: workspace
 
-| Tool            | What it does          | Notes |
-| --------------- | --------------------- | ----- |
-| `get_workspace` | Get current workspace |       |
+| Tool               | What it does          | Notes |
+| ------------------ | --------------------- | ----- |
+| `get_workspace`    | Get current workspace |       |
+| `list_workspaces`  | List workspaces       |       |
+| `create_workspace` | Create a workspace    |       |
+| `rename_workspace` | Rename a workspace    |       |
 
 #### Account: credits
 

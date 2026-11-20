@@ -35,6 +35,6 @@ It checks a monitored channel every minute and posts each new clip rated 8 or mo
 
 ## Posting
 
-Connection ids come from `GET /connections`. To connect a TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn or Bluesky account, open the link from `GET /connections/link?platform=tiktok`: the account owner signs in on the network itself, and posts go out through its official API.
+Connection ids come from `GET /connections`. To connect a TikTok, Instagram, YouTube, Facebook, Threads, LinkedIn or Bluesky account, open the link from `POST /connections/link` with `{ "platform": "tiktok" }`: the account owner signs in on the network itself, and posts go out through its official API.
 
 The examples post to TikTok as `SELF_ONLY` and to YouTube as `private`, so the first runs are only visible to you. Change `metadataFor` in [`api.mjs`](api.mjs) once you like the results.

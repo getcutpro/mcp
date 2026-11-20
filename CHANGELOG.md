@@ -2,6 +2,12 @@
 
 Every release of `@cutpro/mcp`. The tools themselves follow the [CutPro API](https://cut.pro/docs/reference) and change without a release: a new endpoint becomes a tool within ten minutes.
 
+## 3.1.2 (2026-11-20)
+
+- `get_connection_link` now gives a link that opens the network's own sign-in and connects the account to your workspace directly, with no cut.pro sign-in first.
+- Fixed tool schemas for nullable enum fields: `null` is no longer added to the enum twice when it is already listed, which could make some clients reject the schema.
+- The posting example docs now use `POST /connections/link` with `{ "platform": "tiktok" }` to get a connection link, instead of the old `GET` form.
+
 ## 3.1.1 (2026-11-18)
 
 - Rework clips without clipping again: get new AI title suggestions, make a copy to try another version, create the part that comes right after a clip, and rate clips so CutPro learns what you like.
